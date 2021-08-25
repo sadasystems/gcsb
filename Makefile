@@ -3,3 +3,6 @@ build:
 
 test:
 	go test -v --tags=json1 -mod=vendor -coverprofile=coverage.txt -covermode=atomic ./pkg/...
+
+benchmark:
+	go test -run ^$ -bench . -benchmem ./...
