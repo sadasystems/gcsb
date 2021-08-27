@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"errors"
 	"math/rand"
 	"time"
 	"unsafe"
@@ -31,12 +30,8 @@ type (
 	}
 )
 
-func NewStringGenerator(cfg StringGeneratorConfig) (*StringGenerator, error) {
-	if cfg.Length <= 0 {
-		return nil, errors.New("string length must be > 0")
-	}
-
-	ret := &StringGenerator{
+func NewStringGenerator(cfg StringGeneratorConfig) (StringGenerator, error) {
+	ret := StringGenerator{
 		len: cfg.Length,
 		src: cfg.Source,
 	}
@@ -54,7 +49,7 @@ func NewStringGenerator(cfg StringGeneratorConfig) (*StringGenerator, error) {
  * The random string generation method was borrowed from icza
  * See: https://stackoverflow.com/a/31832326/145479
  */
-func (s *StringGenerator) Next() interface{} {
+func (s *StringGenerator) Next() string {
 	b := make([]byte, s.len)
 	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
 	for i, cache, remain := s.len-1, s.src.Int63(), letterIdxMax; i >= 0; {
