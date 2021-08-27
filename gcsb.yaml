@@ -1,0 +1,23 @@
+project: test project
+database: dbname
+
+max_execution: 1h
+
+# If table exists, we will detect the column types of the table and use DEFAULT data generators
+# Here is where you can override those generators
+tables:
+  row_count: 1000
+  columns:
+    # Column ID is int, so we will use default int
+    # So no need to reference it here
+
+    # column 'example' is a string
+    - name: example
+      type: string
+      generator: hexawhatever
+      length: 20
+      ranges:
+        - start: AAA
+          end: DDD
+        - start: EEE
+          end: FFF

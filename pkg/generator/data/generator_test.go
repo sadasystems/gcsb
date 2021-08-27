@@ -1,7 +1,6 @@
-package generator
+package data
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -39,23 +38,23 @@ func TestThreadGenerator(t *testing.T) {
 				So(cg.threadGenerators[1].Next(), ShouldStartWith, "AAAAAAAG")
 			})
 		})
-		Convey("Second Generator Next11", func() {
-			cg, _ := NewThreadDataGenerator(ThreadDataGeneratorConfig{
-				PrefixLength: 8,
-				StringLength: 64,
-				RowCount:     1000,
-				ThreadCount:  10,
-			})
-			cg.GetThreadGenerators()
-			for i := range cg.threadGenerators {
-				c := 0
-				fmt.Println("----", "Generator", i, "-----------------------------------------------")
-				for c < 200 {
-					fmt.Println(cg.threadGenerators[i].Next())
-					c++
-				}
-			}
-		})
+		// Convey("Second Generator Next11", func() {
+		// 	cg, _ := NewThreadDataGenerator(ThreadDataGeneratorConfig{
+		// 		PrefixLength: 8,
+		// 		StringLength: 64,
+		// 		RowCount:     1000,
+		// 		ThreadCount:  10,
+		// 	})
+		// 	cg.GetThreadGenerators()
+		// 	for i := range cg.threadGenerators {
+		// 		c := 0
+		// 		fmt.Println("----", "Generator", i, "-----------------------------------------------")
+		// 		for c < 200 {
+		// 			fmt.Println(cg.threadGenerators[i].Next())
+		// 			c++
+		// 		}
+		// 	}
+		// })
 
 	})
 }

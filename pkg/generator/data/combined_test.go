@@ -1,4 +1,4 @@
-package generator
+package data
 
 import (
 	"testing"
@@ -9,12 +9,14 @@ import (
 func TestCombinedGenerator(t *testing.T) {
 	Convey("CombinedGenerator", t, func() {
 		Convey("Next", func() {
-			cg := NewCombinedGenerator(CombinedGeneratorConfig{
+			cg, err := NewCombinedGenerator(CombinedGeneratorConfig{
 				Min:          0,
 				Max:          1000000,
 				PrefixLength: 8,
 				StringLength: 64,
 			})
+			So(err, ShouldBeNil)
+			So(cg, ShouldNotBeNil)
 
 			So(cg.Next(), ShouldStartWith, "AAAAAAAA")
 			So(cg.Next(), ShouldStartWith, "AAAAAAAB")

@@ -1,4 +1,4 @@
-package generator
+package data
 
 import (
 	"math"
@@ -44,8 +44,8 @@ type (
 	}
 )
 
-func NewHexavigesimalGenerator(cfg HexavigesimalGeneratorConfig) (HexavigesimalGenerator, error) {
-	ret := HexavigesimalGenerator{
+func NewHexavigesimalGenerator(cfg HexavigesimalGeneratorConfig) (*HexavigesimalGenerator, error) {
+	ret := &HexavigesimalGenerator{
 		min:    cfg.Minimum,
 		max:    cfg.Maximum,
 		cur:    cfg.Minimum,
@@ -55,7 +55,7 @@ func NewHexavigesimalGenerator(cfg HexavigesimalGeneratorConfig) (HexavigesimalG
 	return ret, nil
 }
 
-func (g *HexavigesimalGenerator) Next() string {
+func (g *HexavigesimalGenerator) Next() interface{} {
 	// If Next() is called more than max - min, wrap back around to min
 	if g.cur > g.max {
 		g.cur = g.min
