@@ -8,8 +8,8 @@ import (
 
 func TestHexavigesimalGenerator(t *testing.T) {
 	Convey("HexavigesimalGenerator", t, func() {
+		hg, _ := NewHexavigesimalGenerator(HexavigesimalGeneratorConfig{})
 		Convey("Encode Number", func() {
-			hg, _ := NewHexavigesimalGenerator(HexavigesimalGeneratorConfig{})
 			// So(hg, ShouldNotBeNil)
 			So(hg.Encode(0, 8), ShouldEqual, "AAAAAAAA")
 			So(hg.Encode(10, 8), ShouldEqual, "AAAAAAAK")
@@ -22,7 +22,6 @@ func TestHexavigesimalGenerator(t *testing.T) {
 		})
 
 		Convey("Decode Number", func() {
-			hg, _ := NewHexavigesimalGenerator(HexavigesimalGeneratorConfig{})
 			// So(hg, ShouldNotBeNil)
 			So(hg.Decode("AAAAAAAA"), ShouldEqual, 0)
 			So(hg.Decode("AAAAAAAK"), ShouldEqual, 10)
@@ -35,7 +34,6 @@ func TestHexavigesimalGenerator(t *testing.T) {
 		})
 
 		Convey("GetMaxValue", func() {
-			hg, _ := NewHexavigesimalGenerator(HexavigesimalGeneratorConfig{})
 			So(hg.GetMaxValue(2, 2), ShouldEqual, 4)
 			So(hg.GetMaxValue(3, 2), ShouldEqual, 8)
 			So(hg.GetMaxValue(4, 2), ShouldEqual, 16)
