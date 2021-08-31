@@ -8,11 +8,11 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestRandomBooleanGenerator(t *testing.T) {
-	Convey("RandomBooleanGenerator", t, func() {
+func TestBooleanGenerator(t *testing.T) {
+	Convey("BooleanGenerator", t, func() {
 
-		Convey("Missing Random Source", func() {
-			bg, err := NewRandomBooleanGenerator(RandomBooleanGeneratorConfig{})
+		Convey("Missing  Source", func() {
+			bg, err := NewBooleanGenerator(BooleanGeneratorConfig{})
 
 			So(err, ShouldBeNil)
 			So(bg, ShouldNotBeNil)
@@ -20,7 +20,7 @@ func TestRandomBooleanGenerator(t *testing.T) {
 		})
 
 		Convey("Next", func() {
-			bg, err := NewRandomBooleanGenerator(RandomBooleanGeneratorConfig{
+			bg, err := NewBooleanGenerator(BooleanGeneratorConfig{
 				Source: rand.NewSource(time.Now().UnixNano()),
 			})
 
@@ -39,12 +39,42 @@ func TestRandomBooleanGenerator(t *testing.T) {
 			So(falseSeen, ShouldBeTrue)
 			So(trueSeen, ShouldBeTrue)
 		})
+
+		Convey("Static value", func() {
+			bg, err := NewBooleanGenerator(BooleanGeneratorConfig{
+				Static: true,
+				Value:  false,
+			})
+
+			So(err, ShouldBeNil)
+			So(bg, ShouldNotBeNil)
+
+			for i := 0; i < 20; i++ {
+				So(bg.Next(), ShouldBeFalse)
+			}
+		})
 	})
 }
 
-func BenchmarkRandomBooleanGenerator(b *testing.B) {
-	bg, err := NewRandomBooleanGenerator(RandomBooleanGeneratorConfig{
+func BenchmarkBooleanGenerator(b *testing.B) {
+	bg, err := NewBooleanGenerator(BooleanGeneratorConfig{
 		Source: rand.NewSource(time.Now().UnixNano()),
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		bg.Next()
+	}
+}
+
+func BenchmarkStaticBooleanGenerator(b *testing.B) {
+	bg, err := NewBooleanGenerator(BooleanGeneratorConfig{
+		Static: true,
+		Value:  false,
 	})
 	if err != nil {
 		panic(err)
