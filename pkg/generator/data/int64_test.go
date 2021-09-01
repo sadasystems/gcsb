@@ -8,16 +8,16 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestFloat64Generator(t *testing.T) {
-	Convey("Float64Generator", t, func() {
+func TestInt64Generator(t *testing.T) {
+	Convey("Int64Generator", t, func() {
 		Convey("Nil Source", func() {
-			fg, err := NewFloat64Generator(Float64GeneratorConfig{})
+			fg, err := NewInt64Generator(Int64GeneratorConfig{})
 			So(err, ShouldBeNil)
 			So(fg, ShouldNotBeNil)
 		})
 
 		Convey("Random", func() {
-			fg, err := NewFloat64Generator(Float64GeneratorConfig{
+			fg, err := NewInt64Generator(Int64GeneratorConfig{
 				Source: rand.NewSource(time.Now().UnixNano()),
 			})
 
@@ -25,36 +25,36 @@ func TestFloat64Generator(t *testing.T) {
 			So(fg, ShouldNotBeNil)
 
 			for i := 0; i < 20; i++ {
-				v, ok := fg.Next().(float64)
+				v, ok := fg.Next().(int64)
 				So(v, ShouldNotBeNil)
 				So(ok, ShouldBeTrue)
 			}
 		})
 
 		Convey("Ranged", func() {
-			fg, err := NewFloat64Generator(Float64GeneratorConfig{
+			fg, err := NewInt64Generator(Int64GeneratorConfig{
 				Source:  rand.NewSource(time.Now().UnixNano()),
 				Range:   true,
-				Minimum: 5.0,
-				Maximum: -5.0,
+				Minimum: 10,
+				Maximum: 100000,
 			})
 
 			So(err, ShouldBeNil)
 			So(fg, ShouldNotBeNil)
 
 			for i := 0; i < 20; i++ {
-				v, ok := fg.Next().(float64)
+				v, ok := fg.Next().(int64)
 				So(v, ShouldNotBeNil)
 				So(ok, ShouldBeTrue)
-				So(v, ShouldBeLessThanOrEqualTo, 5.0)
-				So(v, ShouldBeGreaterThanOrEqualTo, -5.0)
+				So(v, ShouldBeLessThanOrEqualTo, 100000)
+				So(v, ShouldBeGreaterThanOrEqualTo, 10)
 			}
 		})
 	})
 }
 
-func BenchmarkRandomFloatGenerator(b *testing.B) {
-	bg, err := NewFloat64Generator(Float64GeneratorConfig{
+func BenchmarkRandomInt64Generator(b *testing.B) {
+	bg, err := NewInt64Generator(Int64GeneratorConfig{
 		Source: rand.NewSource(time.Now().UnixNano()),
 	})
 	if err != nil {
@@ -68,12 +68,12 @@ func BenchmarkRandomFloatGenerator(b *testing.B) {
 	}
 }
 
-func BenchmarkRangedFloatGenerator(b *testing.B) {
-	bg, err := NewFloat64Generator(Float64GeneratorConfig{
+func BenchmarkRangedInt64Generator(b *testing.B) {
+	bg, err := NewInt64Generator(Int64GeneratorConfig{
 		Source:  rand.NewSource(time.Now().UnixNano()),
 		Range:   true,
-		Minimum: 0,
-		Maximum: 1000,
+		Minimum: 1,
+		Maximum: 1000000,
 	})
 	if err != nil {
 		panic(err)
