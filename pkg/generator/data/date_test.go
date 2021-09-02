@@ -1,7 +1,6 @@
 package data
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -44,7 +43,6 @@ func TestDateGenerator(t *testing.T) {
 		Convey("Range", func() {
 			max := time.Now()
 			min := max.Add(-(time.Hour * 24) * 7)
-			fmt.Println(min, max)
 
 			dg, err := NewDateGenerator(DateGeneratorConfig{
 				Source:  rand.NewSource(time.Now().UnixNano()),
