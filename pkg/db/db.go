@@ -98,6 +98,7 @@ func getDatabase(configPath string) (adminpb.Database, error) {
 			return *db, err
 		}
 	}
+
 	return *db, nil
 }
 
