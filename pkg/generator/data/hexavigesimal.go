@@ -1,6 +1,7 @@
 package data
 
 import (
+	. "github.com/sadasystems/gcsb/pkg/config"
 	"math"
 	"math/big"
 )
@@ -41,6 +42,7 @@ type (
 		Minimum int
 		Maximum int
 		Length  int
+		KeyRange  *TableConfigGeneratorRange
 	}
 )
 
@@ -50,6 +52,10 @@ func NewHexavigesimalGenerator(cfg HexavigesimalGeneratorConfig) (*Hexavigesimal
 		max:    cfg.Maximum,
 		cur:    cfg.Minimum,
 		length: cfg.Length,
+	}
+	if cfg.KeyRange != nil {
+		ret.min = int(ret.Decode(cfg.KeyRange.Start))
+		ret.max = int(ret.Decode(cfg.KeyRange.End))
 	}
 
 	return ret, nil

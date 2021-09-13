@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	. "github.com/sadasystems/gcsb/pkg/config"
 	"math/rand"
 	"time"
 )
@@ -22,6 +23,7 @@ type (
 		StringLength int
 		Min          int
 		Max          int
+		KeyRange TableConfigGeneratorRange
 	}
 )
 

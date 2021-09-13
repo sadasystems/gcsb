@@ -20,6 +20,6 @@ tables:
           length: 100
           prefix_length: 10
           threads: 10
-          range:
+          key_range:
             start: AAAAAAAAAA
             end: ZZZZZZZZZZ

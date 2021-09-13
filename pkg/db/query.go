@@ -5,10 +5,6 @@ import (
 	"strings"
 )
 
-type DataRow interface {
-	Get(string) string
-}
-
 func NewInsertQuery (c config.TableConfigTable, row DataRow) string {
 	var sb strings.Builder
 	sb.WriteString("INSERT " + c.Name + " (")
@@ -16,7 +12,7 @@ func NewInsertQuery (c config.TableConfigTable, row DataRow) string {
 	var values []string
 	for _, column := range c.Columns {
 		columns = append(columns, column.Name)
-		values = append(values, row.Get(column.Name))
+		values = append(values, row.Get(column))
 	}
 	sb.WriteString(strings.Join(columns, ", "))
 	sb.WriteString(") VALUES (")
