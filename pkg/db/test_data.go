@@ -1,8 +1,9 @@
 package db
 
 import (
-	. "github.com/sadasystems/gcsb/pkg/config"
 	"reflect"
+
+	. "github.com/sadasystems/gcsb/pkg/config"
 )
 
 type FakeRow struct {
@@ -58,15 +59,6 @@ var FAKE_DATA_ROW_BUILDER_CONFIG = TableConfigTable{Name: "Singers", Columns: []
 		Generator: TableConfigGenerator{
 			Type:   "string",
 			Length: 20,
-		},
-	}, {
-		Name: "Age",
-		Type: "INT(64)",
-		Generator: TableConfigGenerator{
-			Type:  "string",
-			Range: false,
-			Min:   0,
-			Max:   100000000,
 		},
 	},
 }}

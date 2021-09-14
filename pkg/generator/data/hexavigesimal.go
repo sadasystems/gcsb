@@ -66,7 +66,7 @@ func (g *HexavigesimalGenerator) Next() interface{} {
 	if g.cur > g.max {
 		g.cur = g.min
 	}
-	ret := g.Encode(uint64(g.cur), 8)
+	ret := g.Encode(uint64(g.cur), g.length)
 	g.cur++
 	return ret
 }

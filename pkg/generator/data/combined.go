@@ -2,7 +2,7 @@ package data
 
 import (
 	"fmt"
-	. "github.com/sadasystems/gcsb/pkg/config"
+	"github.com/sadasystems/gcsb/pkg/config"
 	"math/rand"
 	"time"
 )
@@ -23,7 +23,7 @@ type (
 		StringLength int
 		Min          int
 		Max          int
-		KeyRange TableConfigGeneratorRange
+		KeyRange     *config.TableConfigGeneratorRange
 	}
 )
 
@@ -49,8 +49,10 @@ func NewCombinedGenerator(cfg CombinedGeneratorConfig) (*CombinedGenerator, erro
 
 	// TODO: Should HexavigesimaGenerator receive the same rand.Source as combined generator?
 	hg, err := NewHexavigesimalGenerator(HexavigesimalGeneratorConfig{
+		Length:  cfg.PrefixLength,
 		Minimum: gen.min,
 		Maximum: gen.max,
+		KeyRange: cfg.KeyRange,
 	})
 
 	if err != nil {

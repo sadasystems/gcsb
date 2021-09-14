@@ -2,40 +2,42 @@ package db
 
 import (
 	"fmt"
-	. "github.com/sadasystems/gcsb/pkg/config"
-	. "github.com/sadasystems/gcsb/pkg/generator"
-	. "github.com/sadasystems/gcsb/pkg/generator/data"
 	"strings"
+
+	"github.com/sadasystems/gcsb/pkg/config"
+	"github.com/sadasystems/gcsb/pkg/generator"
+	"github.com/sadasystems/gcsb/pkg/generator/data"
 )
 
 type (
 	DataRow interface {
-		Get(column TableConfigColumn) string
+		Get(column config.TableConfigColumn) string
 	}
 
 	DataRowBuilder struct {
-		generators map[string]Generator
-		config     TableConfigTable
-		Get        func(TableConfigColumn) string
+		generators map[string]data.Generator
+		config     config.TableConfigTable
 	}
 )
 
-func NewDataRowBuilder(c TableConfigTable) *DataRowBuilder {
+func NewDataRowBuilder(c config.TableConfigTable) *DataRowBuilder {
 	drb := &DataRowBuilder{
-		generators: make(map[string]Generator),
+		generators: make(map[string]data.Generator),
 		config:     c,
 	}
 	for _, column := range c.Columns {
-		drb.generators[column.Name] = GetGenerator(column.Generator)
+		drb.generators[column.Name], _ = generator.GetGenerator(column.Generator)
 	}
-	drb.Get = func(col TableConfigColumn) string {
-		ret := drb.generators[col.Name].Next()
-		str := fmt.Sprintf("%v", ret)
-		if strings.HasPrefix(str, "STRING") {
-			str = "'" + str + "'"
-		}
-		return str
-	}
+
 	return drb
 }
 
+func (drb *DataRowBuilder) Get(col config.TableConfigColumn) string {
+	var ret string
+	gen := drb.generators[col.Name]
+	if strings.HasPrefix(col.Type, "STRING") {
+		ret = fmt.Sprintf("%v", gen.Next())
+		ret = "'" + ret + "'"
+	}
+	return ret
+}
