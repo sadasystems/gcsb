@@ -29,5 +29,11 @@ func TestDataRow(t *testing.T) {
 			So(len(drb.Get(c2)), ShouldEqual, 22)
 
 		})
+		Convey("GetValuesString", func() {
+			config := FAKE_DATA_ROW_BUILDER_CONFIG
+			drb := NewDataRowBuilder(config)
+			values := drb.GetValuesString()
+			So(values, ShouldStartWith, "AAAAlRczqb, AAAAA")
+		})
 	})
 }

@@ -9,6 +9,9 @@ max_execution: 1h
 tables:
   - name: TestGCSB1
     row_count: 1000
+    operations:
+      read: 25
+      write: 75
     columns:
       # Column ID is int, so we will use default int
       # So no need to reference it here

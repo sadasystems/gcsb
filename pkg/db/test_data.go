@@ -1,9 +1,8 @@
 package db
 
 import (
-	"reflect"
-
 	. "github.com/sadasystems/gcsb/pkg/config"
+	"reflect"
 )
 
 type FakeRow struct {
@@ -16,6 +15,10 @@ func (f FakeRow) Get(c TableConfigColumn) string {
 	rv := reflect.ValueOf(&f)
 	value := reflect.Indirect(rv).FieldByName(c.Name)
 	return "'" + value.String() + "'"
+}
+
+func (f FakeRow) GetValuesString() string {
+	return "'" + f.Name + "', '" + f.City + "', '" + f.Genre + "'"
 }
 
 var FAKE_ROW_CONFIG = FakeRow{Name: "Lil Peep", City: "Allentown", Genre: "Rap"}

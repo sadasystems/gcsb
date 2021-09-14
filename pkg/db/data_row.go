@@ -12,6 +12,7 @@ import (
 type (
 	DataRow interface {
 		Get(column config.TableConfigColumn) string
+		GetValuesString() string
 	}
 
 	DataRowBuilder struct {
@@ -41,3 +42,14 @@ func (drb *DataRowBuilder) Get(col config.TableConfigColumn) string {
 	}
 	return ret
 }
+
+func (drb *DataRowBuilder) GetValuesString() string {
+	var values []string
+	for _, col := range drb.config.Columns {
+		gen := drb.generators[col.Name]
+		val := fmt.Sprintf("%v", gen.Next())
+		values = append(values, val)
+	}
+	return strings.Join(values, ", ")
+}
+

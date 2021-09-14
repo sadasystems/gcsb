@@ -1,5 +1,7 @@
 package config
 
+import "strings"
+
 type GCSBConfig struct {
 	Database string             `yaml:"database"`
 	Project  string             `yaml:"project"`
@@ -8,9 +10,10 @@ type GCSBConfig struct {
 }
 
 type TableConfigTable struct {
-	Name     string              `yaml:"name"`
-	RowCount int                 `yaml:"row_count"`
-	Columns  []TableConfigColumn `yaml:"columns"`
+	Name       string                `yaml:"name"`
+	RowCount   int                   `yaml:"row_count"`
+	Columns    []TableConfigColumn   `yaml:"columns"`
+	Operations TableConfigOperations `yaml:"operations"`
 }
 
 type TableConfigColumn struct {
@@ -33,4 +36,17 @@ type TableConfigGenerator struct {
 type TableConfigGeneratorRange struct {
 	Start string `yaml:"start"`
 	End   string `yaml:"end"`
+}
+
+type TableConfigOperations struct {
+	Read  uint `yaml:"read"`
+	Write uint `yaml:"write"`
+}
+
+func (c *TableConfigTable) GetColumnNamesString() string {
+	var columns []string
+	for _, column := range c.Columns {
+		columns = append(columns, column.Name)
+	}
+	return strings.Join(columns, ", ")
 }

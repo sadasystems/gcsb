@@ -12,4 +12,9 @@ func TestQuery(t *testing.T) {
 		query := NewInsertQuery(config, fakeRow)
 		So(query, ShouldEqual, "INSERT Singers (Name, City, Genre) VALUES ('Lil Peep', 'Allentown', 'Rap')")
 	})
+	Convey("NewReadQuery", t, func() {
+		config := FAKE_ROW_TABLE_CONFIG
+		query := NewReadQuery(config)
+		So(query, ShouldEqual, "SELECT Name, City, Genre FROM Singers")
+	})
 }
