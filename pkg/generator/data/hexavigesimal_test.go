@@ -43,6 +43,7 @@ func TestHexavigesimalGenerator(t *testing.T) {
 
 		Convey("Generate Stuff", func() {
 			hg, _ := NewHexavigesimalGenerator(HexavigesimalGeneratorConfig{
+				Length: 8,
 				Minimum: 0,
 				Maximum: 10000000,
 			})
