@@ -1,5 +1,10 @@
 package schema
 
+import (
+	"cloud.google.com/go/spanner"
+	"cloud.google.com/go/spanner/spansql"
+)
+
 type (
 	// Columns is a collection of Collumns
 	Columns []*Column
@@ -36,3 +41,56 @@ type (
 		SpannerState string `spanner:"SPANNER_STATE"`
 	}
 )
+
+var (
+	// getColumnsForTableQuery renders a query for fetching all columns for a table from information_schema.columns
+	getColumnsForTableQuery = spansql.Query{
+		Select: spansql.Select{
+			List: []spansql.Expr{
+				spansql.ID("TABLE_CATALOG"),
+				spansql.ID("TABLE_SCHEMA"),
+				spansql.ID("TABLE_NAME"),
+				spansql.ID("COLUMN_NAME"),
+				spansql.ID("ORDINAL_POSITION"),
+				spansql.ID("COLUMN_DEFAULT"),
+				spansql.ID("DATA_TYPE"),
+				spansql.ID("IS_NULLABLE"),
+				spansql.ID("SPANNER_TYPE"),
+				spansql.ID("IS_GENERATED"),
+				spansql.ID("GENERATION_EXPRESSION"),
+				spansql.ID("IS_STORED"),
+				spansql.ID("SPANNER_STATE"),
+			},
+			From: []spansql.SelectFrom{
+				spansql.SelectFromTable{
+					Table: "information_schema.columns",
+				},
+			},
+			Where: spansql.LogicalOp{
+				Op: spansql.And,
+				LHS: spansql.ComparisonOp{
+					Op:  spansql.Eq,
+					LHS: spansql.ID("table_schema"),
+					RHS: spansql.StringLiteral(""),
+				},
+				RHS: spansql.ComparisonOp{
+					Op:  spansql.Eq,
+					LHS: spansql.ID("table_name"),
+					RHS: spansql.Param("table_name"),
+				},
+			},
+		},
+		Order: []spansql.Order{
+			{Expr: spansql.ID("ORDINAL_POSITION")},
+			{Expr: spansql.ID("COLUMN_NAME")},
+		},
+	}
+)
+
+// GetColumnsQuery returns a spanner statement for fetching column information for a table
+func GetColumnsQuery(table string) spanner.Statement {
+	st := spanner.NewStatement(getColumnsForTableQuery.SQL())
+	st.Params["table_name"] = table
+
+	return st
+}

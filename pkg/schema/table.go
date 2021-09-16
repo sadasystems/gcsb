@@ -1,5 +1,10 @@
 package schema
 
+import (
+	"cloud.google.com/go/spanner"
+	"cloud.google.com/go/spanner/spansql"
+)
+
 type (
 	// Tables is a collection of tables
 	Tables []*Table
@@ -25,3 +30,89 @@ type (
 		SpannerState string `spanner:"SPANNER_STATE"`
 	}
 )
+
+var (
+	// listTablesQuery renders a query for fetching all tables from information_schema.tables
+	listTablesQuery = spansql.Query{
+		Select: spansql.Select{
+			List: []spansql.Expr{
+				spansql.ID("TABLE_CATALOG"),
+				spansql.ID("TABLE_SCHEMA"),
+				spansql.ID("TABLE_NAME"),
+				spansql.ID("TABLE_TYPE"),
+				spansql.ID("PARENT_TABLE_NAME"),
+				spansql.ID("ON_DELETE_ACTION"),
+				spansql.ID("SPANNER_STATE"),
+			},
+			From: []spansql.SelectFrom{
+				spansql.SelectFromTable{
+					Table: "information_schema.tables",
+				},
+			},
+			Where: spansql.LogicalOp{
+				Op: spansql.And,
+				LHS: spansql.ComparisonOp{
+					Op:  spansql.Eq,
+					LHS: spansql.ID("table_catalog"),
+					RHS: spansql.StringLiteral(""),
+				},
+				RHS: spansql.ComparisonOp{
+					Op:  spansql.Eq,
+					LHS: spansql.ID("table_schema"),
+					RHS: spansql.StringLiteral(""),
+				},
+			},
+		},
+		Order: []spansql.Order{
+			{Expr: spansql.ID("table_catalog")},
+			{Expr: spansql.ID("table_schema")},
+			{Expr: spansql.ID("table_name")},
+		},
+	}
+
+	// getTableQuery fetches a table from information_schema.tables
+	getTableQuery = spansql.Query{
+		Select: spansql.Select{
+			List: []spansql.Expr{
+				spansql.ID("TABLE_CATALOG"),
+				spansql.ID("TABLE_SCHEMA"),
+				spansql.ID("TABLE_NAME"),
+				spansql.ID("TABLE_TYPE"),
+				spansql.ID("PARENT_TABLE_NAME"),
+				spansql.ID("ON_DELETE_ACTION"),
+				spansql.ID("SPANNER_STATE"),
+			},
+			From: []spansql.SelectFrom{
+				spansql.SelectFromTable{
+					Table: "information_schema.tables",
+				},
+			},
+			Where: spansql.LogicalOp{
+				Op: spansql.And,
+				LHS: spansql.ComparisonOp{
+					Op:  spansql.Eq,
+					LHS: spansql.ID("table_schema"),
+					RHS: spansql.StringLiteral(""),
+				},
+				RHS: spansql.ComparisonOp{
+					Op:  spansql.Eq,
+					LHS: spansql.ID("table_name"),
+					RHS: spansql.Param("table_name"),
+				},
+			},
+		},
+	}
+)
+
+// ListTablesQuery will construct a query for fetching all tables from information_schema
+// TODO: Support schema?
+func ListTablesQuery() spanner.Statement {
+	return spanner.NewStatement(listTablesQuery.SQL())
+}
+
+func GetTableQuery(table string) spanner.Statement {
+	st := spanner.NewStatement(getTableQuery.SQL())
+	st.Params["table_name"] = table
+
+	return st
+}

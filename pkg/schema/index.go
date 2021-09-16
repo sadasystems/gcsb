@@ -1,5 +1,10 @@
 package schema
 
+import (
+	"cloud.google.com/go/spanner"
+	"cloud.google.com/go/spanner/spansql"
+)
+
 type (
 	// Indexes is a collection of Index
 	Indexes []*Index
@@ -33,3 +38,52 @@ type (
 		SpannerIsManaged bool `spanner:"SPANNER_IS_MANAGED"`
 	}
 )
+
+var (
+	// getIndexesForTableQuery renders a query for fetching all indexes for a table from information_schema.indexes
+	getIndexesForTableQuery = spansql.Query{
+		Select: spansql.Select{
+			List: []spansql.Expr{
+				spansql.ID("TABLE_CATALOG"),
+				spansql.ID("TABLE_SCHEMA"),
+				spansql.ID("TABLE_NAME"),
+				spansql.ID("INDEX_NAME"),
+				spansql.ID("INDEX_TYPE"),
+				spansql.ID("PARENT_TABLE_NAME"),
+				spansql.ID("IS_UNIQUE"),
+				spansql.ID("IS_NULL_FILTERED"),
+				spansql.ID("INDEX_STATE"),
+				spansql.ID("SPANNER_IS_MANAGED"),
+			},
+			From: []spansql.SelectFrom{
+				spansql.SelectFromTable{
+					Table: "information_schema.indexes",
+				},
+			},
+			Where: spansql.LogicalOp{
+				Op: spansql.And,
+				LHS: spansql.ComparisonOp{
+					Op:  spansql.Eq,
+					LHS: spansql.ID("table_schema"),
+					RHS: spansql.StringLiteral(""),
+				},
+				RHS: spansql.ComparisonOp{
+					Op:  spansql.Eq,
+					LHS: spansql.ID("table_name"),
+					RHS: spansql.Param("table_name"),
+				},
+			},
+		},
+		Order: []spansql.Order{
+			{Expr: spansql.ID("INDEX_NAME")},
+		},
+	}
+)
+
+// GetIndexesQuery returns a spanner statement for fetching index information for a table
+func GetIndexesQuery(table string) spanner.Statement {
+	st := spanner.NewStatement(getIndexesForTableQuery.SQL())
+	st.Params["table_name"] = table
+
+	return st
+}
