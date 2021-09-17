@@ -34,6 +34,7 @@ var (
 )
 
 func doGenerateRandomString(cmd *cobra.Command, args []string) {
+
 	if rndStrLen <= 0 {
 		log.Fatal("String length is required")
 	}
