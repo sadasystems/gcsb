@@ -12,10 +12,12 @@ type (
 		config        config.GCSBConfig
 		queryBuilders map[string]*QueryBuilder
 		dbClient      *spanner.Client
+		ctx           context.Context
 	}
 )
 
 func NewQueryExecutor(config config.GCSBConfig) (*QueryExecutor, error) {
+
 	ctx := context.Background()
 
 	client, err := spanner.NewClient(ctx, config.DBName())
@@ -31,16 +33,23 @@ func NewQueryExecutor(config config.GCSBConfig) (*QueryExecutor, error) {
 	return q, nil
 }
 
+func (qe *QueryExecutor) Execute(table config.TableConfigTable) {
+
+	for i := 0; i < table.RowCount; i++ {
+		qe.Next(table)
+	}
+}
+
 func (qe *QueryExecutor) Next(table config.TableConfigTable) {
 	ctx := context.Background()
-	tx, _ := qe.dbClient.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
+	tx, err := qe.dbClient.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
 		stmt := qe.queryBuilders[table.Name].Next()
-		_, err := txn.Update(ctx, stmt)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("")
-		return err
+		fmt.Println(stmt)
+		txn.Query(ctx, stmt)
+		return nil
 	})
+	if err != nil {
+		panic(err)
+	}
 	fmt.Println(tx.Clock())
 }

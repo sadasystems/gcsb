@@ -16,7 +16,7 @@ type (
 	}
 
 	DataRowBuilder struct {
-		config     config.TableConfigTable
+			config     config.TableConfigTable
 		generators map[string]data.Generator
 	}
 )

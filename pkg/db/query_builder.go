@@ -5,6 +5,7 @@ import (
 	"github.com/sadasystems/gcsb/pkg/config"
 	"github.com/sadasystems/gcsb/pkg/generator/operation"
 	"github.com/sadasystems/gcsb/pkg/generator/selector"
+	"log"
 	"strings"
 )
 
@@ -46,10 +47,12 @@ func (qb *QueryBuilder) NewReadQuery() string {
 func (qb *QueryBuilder) Next() spanner.Statement {
 	op := qb.selector.Select().Item()
 	var sql string
-	if op == 1 {
+	if op == operation.READ {
 		sql = qb.NewReadQuery()
-	} else if op == 2 {
+	} else if op == operation.WRITE {
 		sql = qb.NewInsertQuery()
+	} else {
+		log.Println("Operation not supported")
 	}
 	return spanner.Statement{SQL: sql}
 }

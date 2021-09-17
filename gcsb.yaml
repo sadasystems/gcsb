@@ -17,7 +17,7 @@ tables:
       - name: SingerID
         type: STRING(1024)
         generator:
-          type: hexawhatever
+          type: hexadecimal
           length: 100
           prefix_length: 10
           key_range:

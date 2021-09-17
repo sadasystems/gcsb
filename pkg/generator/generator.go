@@ -15,7 +15,7 @@ func GetGenerator(config config.TableConfigGenerator) (data.Generator, error) {
 	var err error
 
 	switch config.Type {
-	case "hexavigesmal":
+	case "hexadecimal":
 		gen, err = data.NewHexavigesimalGenerator(data.HexavigesimalGeneratorConfig{
 			Length:   config.Length,
 			KeyRange: &config.KeyRange,
