@@ -1,9 +1,10 @@
 package data
 
 import (
-	. "github.com/sadasystems/gcsb/pkg/config"
 	"math"
 	"math/big"
+
+	"github.com/sadasystems/gcsb/pkg/config"
 )
 
 var (
@@ -39,10 +40,10 @@ type (
 	}
 
 	HexavigesimalGeneratorConfig struct {
-		Minimum int
-		Maximum int
-		Length  int
-		KeyRange  *TableConfigGeneratorRange
+		Minimum  int
+		Maximum  int
+		Length   int
+		KeyRange *config.TableConfigGeneratorRange
 	}
 )
 
