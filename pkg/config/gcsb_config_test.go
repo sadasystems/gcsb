@@ -1,11 +1,12 @@
 package config
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestConfig(t *testing.T) {
+func TestGCSBConfig(t *testing.T) {
 	Convey("TableConfigTable", t, func() {
 		Convey("GetColumnNamesString", func() {
 			config := TableConfigTable{Columns: []TableConfigColumn{
