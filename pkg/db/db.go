@@ -13,18 +13,18 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Config config.GCSBConfig
+type DBConfig config.GCSBConfig
 
 var (
 	CreateStatement string
-	conf            Config
+	conf            DBConfig
 	ctx             context.Context
 )
 
 func CreateDatabase(ctx context.Context, db string) (*adminpb.Database, error) {
 	matches := regexp.MustCompile("^(.*)/databases/(.*)$").FindStringSubmatch(db)
 	if matches == nil || len(matches) != 3 {
-		return nil, fmt.Errorf("Invalid database id %s", db)
+		return nil, fmt.Errorf("invalid database id %s", db)
 	}
 
 	adminClient, err := database.NewDatabaseAdminClient(ctx)
@@ -49,11 +49,11 @@ func CreateDatabase(ctx context.Context, db string) (*adminpb.Database, error) {
 	return dbInstance, nil
 }
 
-func (c *Config) DBName() string {
+func (c *DBConfig) DBName() string {
 	return "projects/" + c.Project + "/instances/" + c.Instance + "/databases/" + c.Database
 }
 
-func (c *Config) ReadConfig(configPath string) error {
+func (c *DBConfig) ReadDBConfig(configPath string) error {
 	yamlFile, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func (c *Config) ReadConfig(configPath string) error {
 	return nil
 }
 
-func (c *Config) GetCreateStatements() []string {
+func (c *DBConfig) GetCreateStatements() []string {
 	statements := []string{}
 	for _, t := range c.Tables {
 		statements = append(statements, "DROP TABLE "+t.Name)
@@ -82,7 +82,7 @@ func (c *Config) GetCreateStatements() []string {
 func getDatabase(configPath string) (adminpb.Database, error) {
 	var ret adminpb.Database
 	ctx = context.Background()
-	err := conf.ReadConfig(configPath)
+	err := conf.ReadDBConfig(configPath)
 	if err != nil {
 		return ret, err
 	}
