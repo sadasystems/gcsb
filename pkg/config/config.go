@@ -5,15 +5,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Assert that Config implements Validate
-var _ Validate = (*Config)(nil)
-
-// Set Configuration Defaults
-func SetDefaults(v *viper.Viper) {
-	// Default Connection
-	v.SetDefault("connection.num_conns", 10)
-	// v.SetDefault("")
-}
+var (
+	// Assert that Config implements Validate
+	_ Validate = (*Config)(nil)
+)
 
 type (
 	Validate interface {
@@ -24,6 +19,25 @@ type (
 	}
 )
 
+// NewConfig will unmarshal a viper instance into *Config and validate it
+func NewConfig(v *viper.Viper) (*Config, error) {
+	// Unmarshal the config
+	var c Config
+
+	err := v.Unmarshal(&c)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
+
+// Validate will ensure the configuration is valid
 func (c *Config) Validate() error {
 	var result *multierror.Error
 
