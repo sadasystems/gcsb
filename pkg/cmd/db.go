@@ -1,80 +1,44 @@
 package cmd
 
 import (
-	"context"
-	"fmt"
-	"log"
-	"strings"
-
+	"github.com/sadasystems/gcsb/pkg/config"
 	"github.com/sadasystems/gcsb/pkg/db"
 	"github.com/spf13/cobra"
-	"golang.org/x/oauth2/google"
 )
 
 func init() {
-	createDbFlags := dbCreateDbCmd.Flags()
-	createDbFlags.StringVarP(&instanceName, "instance", "i", "test", "spanner instance name")
-	createDbFlags.StringVarP(&dbName, "db", "d", "test", "Database name")
+	doCreateFlags := createCmd.Flags()
+	doCreateFlags.StringVarP(&configPath, "config", "c", "gcsb.yaml", "yaml config path")
 
-	createTableFlags := dbCreateTableCmd.Flags()
-	createTableFlags.StringVarP(&configPath, "config", "c", "gcsb.yaml", "yaml config path")
-
-	dbCreateCmd.AddCommand(dbCreateDbCmd)
-	dbCreateCmd.AddCommand(dbCreateTableCmd)
-	dbCmd.AddCommand(dbCreateCmd)
+	dbCmd.AddCommand(createCmd)
 	rootCmd.AddCommand(dbCmd)
+
 }
 
 var (
-	instanceName string
-	dbName       string
-	configPath   string
+	configPath string
 
 	dbCmd = &cobra.Command{
 		Use:   "db",
 		Short: "DB CLI",
 	}
-
-	dbCreateCmd = &cobra.Command{
-		Use:   "create",
-		Short: "Create something",
-	}
-
-	dbCreateDbCmd = &cobra.Command{
-		Use:   "db",
-		Short: "Create a database",
-		Run:   doCreateDb,
-	}
-
-	dbCreateTableCmd = &cobra.Command{
-		Use:   "table",
-		Short: "Create a table",
-		Run:   doCreateTable,
+	createCmd = &cobra.Command{
+		Use: "create",
+		Run: doCreate,
 	}
 )
 
-func doCreateDb(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
-	var sb strings.Builder
-	credentials, _ := google.FindDefaultCredentials(ctx)
-
-	sb.WriteString("projects/")
-	sb.WriteString(credentials.ProjectID)
-	sb.WriteString("/instances/")
-	sb.WriteString(instanceName)
-	sb.WriteString("/databases/")
-	sb.WriteString(dbName)
-
-	_, err := db.CreateDatabase(ctx, sb.String())
+func doCreate(cmd *cobra.Command, args []string) {
+	cfg, err := config.NewGCSBConfigFromPath(configPath)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
-}
-
-func doCreateTable(cmd *cobra.Command, args []string) {
-	c, err := db.CreateTable(configPath)
+	DB, err := db.NewDB(*cfg)
 	if err != nil {
-		log.Println(err)
+		panic(err)
 	}
-	log.Println(c)
+	err = DB.GetDatabase()
+	if err != nil {
+		panic(err)
+	}
 }

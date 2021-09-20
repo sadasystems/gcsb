@@ -9,7 +9,7 @@ require (
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
-	golang.org/x/oauth2 v0.0.0-20210805134026-6f1e6394065a
 	google.golang.org/genproto v0.0.0-20210821163610-241b8fcbd6c8
+	google.golang.org/grpc v1.40.0
 	gopkg.in/yaml.v2 v2.4.0
 )

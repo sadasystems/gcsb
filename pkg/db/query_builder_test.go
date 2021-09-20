@@ -7,14 +7,15 @@ import (
 
 func TestQuery(t *testing.T) {
 	Convey("NewInsertQuery", t, func() {
-		fakeRow := FAKE_ROW_CONFIG
-		config := FAKE_ROW_TABLE_CONFIG
-		query := NewInsertQuery(config, fakeRow)
-		So(query, ShouldEqual, "INSERT Singers (Name, City, Genre) VALUES ('Lil Peep', 'Allentown', 'Rap')")
+		config := FAKE_DATA_ROW_BUILDER_CONFIG
+		qb := NewQueryBuilder(config)
+		query := qb.NewInsertQuery()
+		So(query, ShouldEqual, "INSERT Singers (Name, City) VALUES (AAAAlRczqb, AAAAA)")
 	})
 	Convey("NewReadQuery", t, func() {
-		config := FAKE_ROW_TABLE_CONFIG
-		query := NewReadQuery(config)
-		So(query, ShouldEqual, "SELECT Name, City, Genre FROM Singers")
+		config := FAKE_DATA_ROW_BUILDER_CONFIG
+		qb := NewQueryBuilder(config)
+		query := qb.NewReadQuery()
+		So(query, ShouldEqual, "SELECT Name, City FROM Singers")
 	})
 }

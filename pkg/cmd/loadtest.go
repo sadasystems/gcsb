@@ -1,17 +1,21 @@
 package cmd
 
 import (
-	"log"
-
+	"github.com/sadasystems/gcsb/pkg/loadtest"
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	loadtestCmd.AddCommand(loadtestLoadCmd, loadtestRunCmd)
+	doLoadTestFlags := loadtestLoadCmd.Flags()
+	doLoadTestFlags.StringVarP(&path, "config", "c", "gcsb.yaml", "yaml config path")
+
+	loadtestCmd.AddCommand(loadtestLoadCmd)
 	rootCmd.AddCommand(loadtestCmd)
 }
 
 var (
+	path string
+
 	loadtestCmd = &cobra.Command{
 		Use:   "loadtest",
 		Short: "Load test commands",
@@ -24,19 +28,12 @@ var (
 		Long:  ``,
 		Run:   doLoadTestLoadCmd,
 	}
-
-	loadtestRunCmd = &cobra.Command{
-		Use:   "run",
-		Short: "Execute a load test",
-		Long:  ``,
-		Run:   doLoadTestRunCmd,
-	}
 )
 
 func doLoadTestLoadCmd(cmd *cobra.Command, args []string) {
-	log.Println("Load test Load")
-}
-
-func doLoadTestRunCmd(cmd *cobra.Command, args []string) {
-	log.Println("Load test Run")
+	lt, err := loadtest.NewLoadTest(path)
+	if err != nil {
+		panic(err)
+	}
+	lt.Execute()
 }

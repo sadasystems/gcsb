@@ -111,7 +111,6 @@ golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
 # golang.org/x/oauth2 v0.0.0-20210805134026-6f1e6394065a
-## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/authhandler
 golang.org/x/oauth2/google
@@ -166,6 +165,7 @@ google.golang.org/genproto/googleapis/spanner/admin/database/v1
 google.golang.org/genproto/googleapis/spanner/v1
 google.golang.org/genproto/googleapis/type/expr
 # google.golang.org/grpc v1.40.0
+## explicit
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
