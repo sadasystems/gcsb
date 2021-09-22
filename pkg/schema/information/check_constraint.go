@@ -1,4 +1,4 @@
-package schema
+package information
 
 type (
 	// CheckConstraints is a collection of CheckConstraint

@@ -1,4 +1,4 @@
-package schema
+package information
 
 type (
 	// Views is a collection of View

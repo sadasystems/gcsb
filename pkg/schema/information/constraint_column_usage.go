@@ -1,4 +1,4 @@
-package schema
+package information
 
 type (
 	// ConstraintcolumnUsages is a collection of ConstraintColumnUsage

@@ -1,4 +1,4 @@
-package schema
+package information
 
 type (
 	// KeyColumnUsages is a collection of KeyColumnUsage

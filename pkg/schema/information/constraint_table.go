@@ -1,4 +1,4 @@
-package schema
+package information
 
 type (
 	// ConstraintTableUsages is a collection of ConstraintTableUsage

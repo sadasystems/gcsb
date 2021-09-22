@@ -1,4 +1,4 @@
-package schema
+package information
 
 type (
 	// TableConstraints is a collection of TableConstraint

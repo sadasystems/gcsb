@@ -14,7 +14,7 @@ func init() {
 	genRandStrFlags.IntVarP(&strAmount, "amount", "a", 1, "amount of strings")
 
 	generateCmd.AddCommand(generateRandomString)
-	rootCmd.AddCommand(generateCmd)
+	plumbingCmd.AddCommand(generateCmd)
 }
 
 var (

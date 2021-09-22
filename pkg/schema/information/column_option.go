@@ -1,4 +1,4 @@
-package schema
+package information
 
 type (
 	// ColumnOptions is a collection of ColumnOption

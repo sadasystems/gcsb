@@ -1,24 +1,17 @@
-project: gcsb-324823 # TODO: Remove
-instance: gcsb-test-1 # TODO: Remove
-database: gcsb-test-db-1 # TODO: Remove
+project:  gcsb-324823 # GCP Project ID
+instance: gcsb-test-1 # Spanner Instance ID
+database: gcsb-test-db-1 # Spanner Database Name
+num_conns: 10
+pool:
+  max_opened: 1000
+  min_opened: 100
+  max_idle: 0
+  write_sessions: 0.2
+  healthcheck_workers: 10
+  healthcheck_interval: 50m
+  track_session_handles: false
 
 max_execution: 1h
-
-connection:
-  project:  gcsb-324823 # GCP Project ID
-  instance: gcsb-test-1 # Spanner Instance ID
-  database: gcsb-test-db-1 # Spanner Database Name
-  num_conns: 10
-  pool:
-    max_opened: 1000
-    min_opened: 100
-    max_idle: 0
-    write_sessions: 0.2
-    healthcheck_workers: 10
-    healthcheck_interval: 50m
-    track_session_handles: false
-
-
 
 # If table exists, we will detect the column types of the table and use DEFAULT data generators
 # Here is where you can override those generators

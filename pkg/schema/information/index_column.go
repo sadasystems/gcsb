@@ -1,4 +1,4 @@
-package schema
+package information
 
 type (
 	// IndexColumns is a collection of IndexColumn

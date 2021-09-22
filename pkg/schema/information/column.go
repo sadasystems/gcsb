@@ -1,4 +1,4 @@
-package schema
+package information
 
 import (
 	"cloud.google.com/go/spanner"

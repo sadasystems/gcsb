@@ -1,4 +1,4 @@
-package schema
+package information
 
 type (
 	// ReferentialConstraints is a collection of ReferentialConstraint

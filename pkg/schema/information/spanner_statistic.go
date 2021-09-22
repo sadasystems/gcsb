@@ -1,4 +1,4 @@
-package schema
+package information
 
 type (
 	// SpannerStatistics is a collection of SpannerStatistic
