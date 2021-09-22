@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -52,8 +51,10 @@ func initConfig() {
 	viper.SetEnvPrefix("GCSB")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	err := viper.ReadInConfig()
-	if err != nil {
-		log.Fatalf("error reading config: %s", err.Error())
-	}
+	// err := viper.ReadInConfig()
+	// if err != nil {
+	// 	log.Fatalf("error reading config: %s", err.Error())
+	// }
+
+	viper.ReadInConfig() // Ignore errors here. We don't want to exit if no config file is found
 }
