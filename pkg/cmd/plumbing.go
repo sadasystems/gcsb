@@ -11,12 +11,16 @@ import (
 )
 
 func init() {
-	plumbingCmd.AddCommand(plumbingConfigCmd)
+	plumbingConfigDumpCmd.Flags().BoolVarP(&plumbingConfigDumpCmdValidate, "validate", "v", false, "Validate the configuration")
 
+	plumbingConfigCmd.AddCommand(plumbingConfigDumpCmd)
+	plumbingCmd.AddCommand(plumbingConfigCmd)
 	rootCmd.AddCommand(plumbingCmd)
 }
 
 var (
+	plumbingConfigDumpCmdValidate bool // Validate the configuration
+
 	plumbingCmd = &cobra.Command{
 		Use:    "plumbing",
 		Short:  "Plumbing commands used during development",
@@ -25,13 +29,26 @@ var (
 	}
 
 	plumbingConfigCmd = &cobra.Command{
-		Use:   "config-dump",
+		Use:   "config",
+		Short: "Configuration related commands",
+		Long:  ``,
+	}
+
+	plumbingConfigDumpCmd = &cobra.Command{
+		Use:   "dump",
 		Short: "Dump the configuration",
 		Long:  `Used to help test the configuration package to make sure values and flags are parsed correclty`,
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg, err := config.NewConfig(viper.GetViper())
 			if err != nil {
 				log.Fatalf("unable to parse configuration: %s", err.Error())
+			}
+
+			if plumbingConfigDumpCmdValidate {
+				err = cfg.Validate()
+				if err != nil {
+					log.Fatalf("unable to validate configuration %s", err.Error())
+				}
 			}
 
 			prettyPrint(cfg)

@@ -11,7 +11,10 @@ import (
 )
 
 var (
-	cfgFile string
+	cfgFile  string
+	project  string
+	instance string
+	database string
 
 	// rootCmd represents the base command when called without any subcommands
 	rootCmd = &cobra.Command{
@@ -33,7 +36,18 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./gcsb.yaml)")
+	// Config file flag
+	flags := rootCmd.PersistentFlags()
+	flags.StringVar(&cfgFile, "config", "", "config file (default is ./gcsb.yaml)")
+
+	flags.StringVarP(&project, "project", "p", "", "GCP Project")
+	viper.BindPFlag("project", flags.Lookup("project")) // bind flag to config
+
+	flags.StringVarP(&instance, "instance", "i", "", "Spanner Instance")
+	viper.BindPFlag("instance", flags.Lookup("instance"))
+
+	flags.StringVarP(&database, "database", "d", "", "Spanner Database")
+	viper.BindPFlag("database", flags.Lookup("database"))
 }
 
 // initConfig reads in config file and ENV variables if set.

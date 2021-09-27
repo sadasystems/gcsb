@@ -58,8 +58,11 @@ database: gcsb-test-db-1 # Spanner Database Name
 				So(err, ShouldBeNil)
 
 				c, err := NewConfig(v)
-				So(err, ShouldNotBeNil)
-				So(c, ShouldBeNil)
+				So(err, ShouldBeNil)
+				So(c, ShouldNotBeNil)
+
+				vErr := c.Validate()
+				So(vErr, ShouldNotBeNil)
 			})
 
 			Convey("DSN", func() {

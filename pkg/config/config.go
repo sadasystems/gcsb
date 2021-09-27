@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/viper"
 	"google.golang.org/api/option"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -45,31 +46,26 @@ func NewConfig(v *viper.Viper) (*Config, error) {
 		return nil, err
 	}
 
-	err = c.Validate()
-	if err != nil {
-		return nil, err
-	}
-
 	return &c, nil
 }
 
-// Validate will ensure the configuration is valid
+// Validate will ensure the configuration is valid for attempting to establish a connection
 func (c *Config) Validate() error {
 	var result *multierror.Error
 
 	if c.Project == "" {
-		result = multierror.Append(result, errors.New("connection.project can not be empty"))
+		result = multierror.Append(result, errors.New("project can not be empty"))
 	}
 
 	if c.Instance == "" {
-		result = multierror.Append(result, errors.New("connection.instance can not be empty"))
+		result = multierror.Append(result, errors.New("instance can not be empty"))
 	}
 
 	if c.Database == "" {
-		result = multierror.Append(result, errors.New("connection.database can not be empty"))
+		result = multierror.Append(result, errors.New("database can not be empty"))
 	}
 
-	// Validate connection block
+	// Validate pool block
 	errs := c.Pool.Validate()
 	if errs != nil {
 		result = multierror.Append(result, errs)
@@ -92,6 +88,10 @@ func (c *Config) Client(ctx context.Context) (*spanner.Client, error) {
 		},
 	},
 		option.WithGRPCConnectionPool(c.NumConns),
+
+		// TODO(grpc/grpc-go#1388) using connection pool without WithBlock
+		// can cause RPCs to fail randomly. We can delete this after the issue is fixed.
+		option.WithGRPCDialOption(grpc.WithBlock()),
 	)
 
 	return client, err
