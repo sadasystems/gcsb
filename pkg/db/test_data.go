@@ -1,8 +1,9 @@
 package db
 
 import (
-	. "github.com/sadasystems/gcsb/pkg/config"
 	"reflect"
+
+	"github.com/sadasystems/gcsb/pkg/config"
 )
 
 type FakeRow struct {
@@ -11,7 +12,7 @@ type FakeRow struct {
 	Genre string
 }
 
-func (f FakeRow) Get(c TableConfigColumn) string {
+func (f FakeRow) Get(c config.TableConfigColumn) string {
 	rv := reflect.ValueOf(&f)
 	value := reflect.Indirect(rv).FieldByName(c.Name)
 	return "'" + value.String() + "'"
@@ -21,13 +22,13 @@ func (f FakeRow) GetValuesString() string {
 	return "'" + f.Name + "', '" + f.City + "', '" + f.Genre + "'"
 }
 
-var FAKE_DATA_ROW_BUILDER_CONFIG = TableConfigTable{Name: "Singers", Columns: []TableConfigColumn{
+var FAKE_DATA_ROW_BUILDER_CONFIG = config.TableConfigTable{Name: "Singers", Columns: []config.TableConfigColumn{
 	{
 		Name: "Name",
 		Type: "STRING(1024)",
-		Generator: TableConfigGenerator{
+		Generator: config.TableConfigGenerator{
 			Type:         "combined",
-			KeyRange:     TableConfigGeneratorRange{Start: "AAAA", End: "ZZZZ"},
+			KeyRange:     config.TableConfigGeneratorRange{Start: "AAAA", End: "ZZZZ"},
 			Length:       10,
 			PrefixLength: 4,
 		},
@@ -35,9 +36,9 @@ var FAKE_DATA_ROW_BUILDER_CONFIG = TableConfigTable{Name: "Singers", Columns: []
 	{
 		Name: "City",
 		Type: "STRING(1024)",
-		Generator: TableConfigGenerator{
+		Generator: config.TableConfigGenerator{
 			Type:     "hexavigesmal",
-			KeyRange: TableConfigGeneratorRange{Start: "BBBBB", End: "UUUUU"},
+			KeyRange: config.TableConfigGeneratorRange{Start: "BBBBB", End: "UUUUU"},
 			Length:   5,
 		},
 	},

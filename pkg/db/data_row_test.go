@@ -8,7 +8,8 @@ import (
 
 func TestDataRow(t *testing.T) {
 	Convey("DataRowBuilder", t, func() {
-		Convey("DataRowBuilder", func() {
+		SkipConvey("DataRowBuilder", func() {
+
 			config := FAKE_DATA_ROW_BUILDER_CONFIG
 			drb := NewDataRowBuilder(config)
 
@@ -29,7 +30,7 @@ func TestDataRow(t *testing.T) {
 			So(len(drb.Get(c2)), ShouldEqual, 22)
 
 		})
-		Convey("GetValuesString", func() {
+		SkipConvey("GetValuesString", func() {
 			config := FAKE_DATA_ROW_BUILDER_CONFIG
 			drb := NewDataRowBuilder(config)
 			values := drb.GetValuesString()

@@ -1,107 +1,103 @@
 package config
 
 import (
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"strings"
+	"context"
+	"errors"
+	"fmt"
+
+	"cloud.google.com/go/spanner"
+	"github.com/hashicorp/go-multierror"
+	"github.com/spf13/viper"
+	"google.golang.org/api/option"
+	"google.golang.org/grpc"
 )
 
-type GCSBConfig struct {
-	Database string             `yaml:"database"`
-	Project  string             `yaml:"project"`
-	Instance string             `yaml:"instance"`
-	Tables   []TableConfigTable `yaml:"tables"`
-}
+var (
+	// Assert that Config implements Validate
+	_ Validate = (*Config)(nil)
+)
 
-type TableConfigTable struct {
-	Name       string                `yaml:"name"`
-	RowCount   int                   `yaml:"row_count"`
-	Columns    []TableConfigColumn   `yaml:"columns"`
-	Operations TableConfigOperations `yaml:"operations"`
-	PrimaryKey string                `yaml:"primary_key"`
-}
+type (
+	Validate interface {
+		Validate() error
+	}
+	Config struct {
+		Project  string `mapstructure:"project"`
+		Instance string `mapstructure:"instance"`
+		Database string `mapstructure:"database"`
+		NumConns int    `mapstructure:"num_conns"`
+		Pool     Pool   `mapstructure:"pool"`
+	}
+)
 
-type TableConfigColumn struct {
-	Name      string               `yaml:"name"`
-	Type      string               `yaml:"type"`
-	Generator TableConfigGenerator `yaml:"generator"`
-}
+// NewConfig will unmarshal a viper instance into *Config and validate it
+func NewConfig(v *viper.Viper) (*Config, error) {
+	// Bind env vars
+	Bind(v)
 
-type TableConfigGenerator struct {
-	Type         string                    `yaml:"type"`
-	Length       int                       `yaml:"length"`
-	PrefixLength int                       `yaml:"prefix_length"`
-	Threads      int                       `yaml:"threads"`
-	KeyRange     TableConfigGeneratorRange `yaml:"key_range"`
-	Range        bool                      `yaml:"range"`
-	Min          int                       `yaml:"min"`
-	Max          int                       `yaml:"max"`
-}
+	// Set Default Values
+	SetDefaults(v)
 
-type TableConfigGeneratorRange struct {
-	Start string `yaml:"start"`
-	End   string `yaml:"end"`
-}
+	// Unmarshal the config
+	var c Config
 
-type TableConfigOperations struct {
-	Read  uint `yaml:"read"`
-	Write uint `yaml:"write"`
-}
-
-func NewGCSBConfigFromPath(configPath string) (*GCSBConfig, error) {
-	c := &GCSBConfig{}
-	err := c.ReadConfig(configPath)
+	err := v.Unmarshal(&c)
 	if err != nil {
 		return nil, err
 	}
-	return c, nil
+
+	return &c, nil
 }
 
-func (c *TableConfigTable) GetColumnNamesString() string {
-	var columns []string
-	for _, column := range c.Columns {
-		columns = append(columns, column.Name)
+// Validate will ensure the configuration is valid for attempting to establish a connection
+func (c *Config) Validate() error {
+	var result *multierror.Error
+
+	if c.Project == "" {
+		result = multierror.Append(result, errors.New("project can not be empty"))
 	}
-	return strings.Join(columns, ", ")
+
+	if c.Instance == "" {
+		result = multierror.Append(result, errors.New("instance can not be empty"))
+	}
+
+	if c.Database == "" {
+		result = multierror.Append(result, errors.New("database can not be empty"))
+	}
+
+	// Validate pool block
+	errs := c.Pool.Validate()
+	if errs != nil {
+		result = multierror.Append(result, errs)
+	}
+
+	return result.ErrorOrNil()
 }
 
-func (c *TableConfigTable) GetCreateStatement() string {
-	var sb strings.Builder
-	sb.WriteString("CREATE TABLE ")
-	sb.WriteString(c.Name)
-	sb.WriteString("(")
-	var columns []string
-	for _, column := range c.Columns {
-		columns = append(columns, column.Name+" "+column.Type)
-	}
-	sb.WriteString(strings.Join(columns, ", "))
-	sb.WriteString(") PRIMARY KEY (" + c.PrimaryKey + ")")
-	return sb.String()
+// Client returns a configured spanner client
+func (c *Config) Client(ctx context.Context) (*spanner.Client, error) {
+	client, err := spanner.NewClientWithConfig(ctx, c.DB(), spanner.ClientConfig{
+		SessionPoolConfig: spanner.SessionPoolConfig{
+			MaxOpened:           uint64(c.Pool.MaxOpened),
+			MinOpened:           uint64(c.Pool.MinOpened),
+			MaxIdle:             uint64(c.Pool.MaxIdle),
+			WriteSessions:       c.Pool.WriteSessions,
+			HealthCheckWorkers:  c.Pool.HealthcheckWorkers,
+			HealthCheckInterval: c.Pool.HealthcheckInterval,
+			TrackSessionHandles: c.Pool.TrackSessionHandles,
+		},
+	},
+		option.WithGRPCConnectionPool(c.NumConns),
+
+		// TODO(grpc/grpc-go#1388) using connection pool without WithBlock
+		// can cause RPCs to fail randomly. We can delete this after the issue is fixed.
+		option.WithGRPCDialOption(grpc.WithBlock()),
+	)
+
+	return client, err
 }
 
-func (c *GCSBConfig) ParentName() string {
-	return "projects/" + c.Project + "/instances/" + c.Instance
-}
-
-func (c *GCSBConfig) DBName() string {
-	return c.ParentName() + "/databases/" + c.Database
-}
-
-func (c *GCSBConfig) ReadConfig(configPath string) error {
-	yamlFile, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		return err
-	}
-	err = yaml.Unmarshal(yamlFile, &c)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-func (c *GCSBConfig) GetCreateStatements() []string {
-	var columns []string
-	for _, table := range c.Tables {
-		columns = append(columns, table.GetCreateStatement())
-	}
-	return columns
+// DB returns the database DSN
+func (c *Config) DB() string {
+	return fmt.Sprintf("projects/%s/instances/%s/database/%s", c.Project, c.Instance, c.Database)
 }
