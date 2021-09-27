@@ -41,17 +41,24 @@ tables:
     operations:
       read: 25
       write: 75
+    primary_key: SingerID
     columns:
-      # Column ID is int, so we will use default int
-      # So no need to reference it here
-
-      - name: FullName
+      - name: SingerID
         type: STRING(1024)
         generator:
-          type: hexawhatever
+          type: hexadecimal
           length: 100
           prefix_length: 10
-          threads: 10
           key_range:
             start: AAAAAAAAAA
             end: ZZZZZZZZZZ
+      - name: FullName
+        type: STRING(1024)
+        generator:
+          type: string
+          length: 40
+      - name: Age
+        type: INT64
+        generator:
+          type: int64
+          length: 100

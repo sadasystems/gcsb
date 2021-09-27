@@ -3,123 +3,62 @@ package db
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"regexp"
 
+	"cloud.google.com/go/spanner"
 	database "cloud.google.com/go/spanner/admin/database/apiv1"
 	"github.com/sadasystems/gcsb/pkg/config"
-	adminpb "google.golang.org/genproto/googleapis/spanner/admin/database/v1"
-	"gopkg.in/yaml.v2"
+	databasepb "google.golang.org/genproto/googleapis/spanner/admin/database/v1"
+	"google.golang.org/grpc/codes"
 )
 
-type DBConfig config.GCSBConfig
-
-var (
-	CreateStatement string
-	conf            DBConfig
-	ctx             context.Context
+type (
+	DB struct {
+		admin  *database.DatabaseAdminClient
+		client *spanner.Client
+		ctx    context.Context
+		config config.GCSBConfig
+	}
 )
 
-func CreateDatabase(ctx context.Context, db string) (*adminpb.Database, error) {
-	matches := regexp.MustCompile("^(.*)/databases/(.*)$").FindStringSubmatch(db)
-	if matches == nil || len(matches) != 3 {
-		return nil, fmt.Errorf("invalid database id %s", db)
-	}
-
-	adminClient, err := database.NewDatabaseAdminClient(ctx)
+func NewDB(config config.GCSBConfig) (*DB, error) {
+	ctx := context.Background()
+	admin, err := database.NewDatabaseAdminClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer adminClient.Close()
+	client, err := spanner.NewClient(ctx, config.DBName())
+	if err != nil {
+		return nil, err
+	}
+	db := &DB{
+		admin:  admin,
+		client: client,
+		ctx:    ctx,
+		config: config,
+	}
+	return db, nil
+}
 
-	CreateStatement := "CREATE DATABASE `" + matches[2] + "`"
-	op, err := adminClient.CreateDatabase(ctx, &adminpb.CreateDatabaseRequest{
-		Parent:          matches[1],
-		CreateStatement: CreateStatement,
+func (db *DB) CreateDatabase() error {
+	_, err := db.admin.CreateDatabase(db.ctx, &databasepb.CreateDatabaseRequest{
+		Parent:          db.config.ParentName(),
+		CreateStatement: "CREATE DATABASE `" + db.config.Database + "`",
+		ExtraStatements: db.config.GetCreateStatements(),
 	})
-
-	if err != nil {
-		return nil, err
+	if err == nil {
+		fmt.Println("Created database " + db.config.DBName())
 	}
-	dbInstance, err := op.Wait(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return dbInstance, nil
+	return err
 }
 
-func (c *DBConfig) DBName() string {
-	return "projects/" + c.Project + "/instances/" + c.Instance + "/databases/" + c.Database
-}
-
-func (c *DBConfig) ReadDBConfig(configPath string) error {
-	yamlFile, err := ioutil.ReadFile(configPath)
-	if err != nil {
+func (db *DB) GetDatabase() error {
+	fmt.Println(db.config.DBName())
+	_, err := db.admin.GetDatabase(db.ctx, &databasepb.GetDatabaseRequest{Name: db.config.DBName()})
+	if err != nil && spanner.ErrCode(err) == codes.NotFound {
+		fmt.Println("Database not found, creating")
+		err = db.CreateDatabase()
+	} else if err != nil {
 		return err
 	}
-	err = yaml.Unmarshal(yamlFile, &conf)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *DBConfig) GetCreateStatements() []string {
-	statements := []string{}
-	for _, t := range c.Tables {
-		statements = append(statements, "DROP TABLE "+t.Name)
-		var stmt string = "CREATE TABLE " + t.Name + " ( ID INT64 NOT NULL"
-		for _, c := range t.Columns {
-			stmt += ",\n" + c.Name + " " + c.Type
-		}
-		stmt += ") PRIMARY KEY (ID)"
-		statements = append(statements, stmt)
-	}
-	return statements
-}
-
-func getDatabase(configPath string) (adminpb.Database, error) {
-	var ret adminpb.Database
-	ctx = context.Background()
-	err := conf.ReadDBConfig(configPath)
-	if err != nil {
-		return ret, err
-	}
-	adminClient, err := database.NewDatabaseAdminClient(ctx)
-	if err != nil {
-		return ret, err
-	}
-	db, _ := adminClient.GetDatabase(ctx, &adminpb.GetDatabaseRequest{Name: conf.DBName()})
-
-	if db == nil {
-		db, err = CreateDatabase(ctx, conf.DBName())
-		if err != nil {
-			return *db, err
-		}
-	}
-
-	return *db, nil
-}
-
-func CreateTable(configPath string) (adminpb.Database, error) {
-	ctx = context.Background()
-
-	DB, _ := getDatabase(configPath)
-	adminClient, _ := database.NewDatabaseAdminClient(ctx)
-
-	statements := conf.GetCreateStatements()
-	fmt.Println(statements)
-	op, err := adminClient.UpdateDatabaseDdl(ctx, &adminpb.UpdateDatabaseDdlRequest{
-		Database:   conf.DBName(),
-		Statements: statements,
-	})
-	if err != nil {
-		log.Println("Error creating table " + err.Error())
-	}
-	if err := op.Wait(ctx); err != nil {
-		return DB, err
-	}
-	log.Println("Created Venues table in database " + conf.DBName() + "\n")
-	return DB, err
+	return err
 }

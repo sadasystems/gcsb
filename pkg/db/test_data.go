@@ -22,22 +22,6 @@ func (f FakeRow) GetValuesString() string {
 	return "'" + f.Name + "', '" + f.City + "', '" + f.Genre + "'"
 }
 
-var FAKE_ROW_CONFIG = FakeRow{Name: "Lil Peep", City: "Allentown", Genre: "Rap"}
-
-var FAKE_ROW_TABLE_CONFIG = config.TableConfigTable{Name: "Singers", Columns: []config.TableConfigColumn{
-	{
-		Name: "Name",
-		Type: "STRING(1024)",
-	},
-	{
-		Name: "City",
-		Type: "STRING(1024)",
-	}, {
-		Name: "Genre",
-		Type: "STRING(1024)",
-	},
-}}
-
 var FAKE_DATA_ROW_BUILDER_CONFIG = config.TableConfigTable{Name: "Singers", Columns: []config.TableConfigColumn{
 	{
 		Name: "Name",
@@ -56,13 +40,6 @@ var FAKE_DATA_ROW_BUILDER_CONFIG = config.TableConfigTable{Name: "Singers", Colu
 			Type:     "hexavigesmal",
 			KeyRange: config.TableConfigGeneratorRange{Start: "BBBBB", End: "UUUUU"},
 			Length:   5,
-		},
-	}, {
-		Name: "Genre",
-		Type: "STRING(1024)",
-		Generator: config.TableConfigGenerator{
-			Type:   "string",
-			Length: 20,
 		},
 	},
 }}

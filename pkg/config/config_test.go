@@ -34,14 +34,8 @@ func TestConfig(t *testing.T) {
 			Convey("Valid", func() {
 				v := viper.New()
 				v.SetConfigType("yaml")
-
 				// Read the config
-				err := v.ReadConfig(bytes.NewBuffer(
-					[]byte(`
-project:  test-123 # GCP Project ID
-instance: gcsb-test-1 # Spanner Instance ID
-database: gcsb-test-db-1 # Spanner Database Name
-`)))
+				err := v.ReadConfig(bytes.NewBuffer(cfgExample))
 				So(err, ShouldBeNil)
 
 				c, err := NewConfig(v)
