@@ -1,6 +1,12 @@
 package schema
 
-import "github.com/sadasystems/gcsb/pkg/schema/information"
+import (
+	"context"
+	"fmt"
+
+	"cloud.google.com/go/spanner"
+	"github.com/sadasystems/gcsb/pkg/schema/information"
+)
 
 type (
 	Table interface {
@@ -15,6 +21,8 @@ type (
 		Parent() Table
 		SetSpanenrState(string)
 		SpannerState() string
+
+		AddColumn(Column)
 	}
 
 	table struct {
@@ -23,11 +31,59 @@ type (
 		p            string
 		parent       Table
 		spannerState string
+		columns      Columns
 	}
 )
 
 func NewTable() Table {
-	return &table{}
+	return &table{
+		columns: NewColumns(),
+	}
+}
+
+func LoadTable(ctx context.Context, client *spanner.Client, s Schema, t string) error {
+	iter := client.Single().Query(ctx, information.GetTableQuery(t))
+	defer iter.Stop()
+	err := iter.Do(func(row *spanner.Row) error {
+		var ti information.Table
+		if err := row.ToStruct(&ti); err != nil {
+			return err
+		}
+
+		tp := NewTableFromSchema(ti)
+		s.SetTable(tp)
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func LoadTables(ctx context.Context, client *spanner.Client, s Schema) error {
+	iter := client.Single().Query(ctx, information.ListTablesQuery())
+	defer iter.Stop()
+
+	err := iter.Do(func(row *spanner.Row) error {
+		var ti information.Table
+		if err := row.ToStruct(&ti); err != nil {
+			return err
+		}
+
+		tp := NewTableFromSchema(ti)
+		s.AddTable(tp)
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("iterating tables: %s", err.Error())
+	}
+
+	return nil
 }
 
 func NewTableFromSchema(x information.Table) Table {
@@ -87,4 +143,8 @@ func (t *table) SetSpanenrState(x string) {
 
 func (t *table) SpannerState() string {
 	return t.spannerState
+}
+
+func (t *table) AddColumn(x Column) {
+	t.columns.AddColumn(x)
 }

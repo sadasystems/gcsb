@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"cloud.google.com/go/spanner"
 	"github.com/sadasystems/gcsb/pkg/config"
-	"github.com/sadasystems/gcsb/pkg/schema/information"
 )
 
 type (
@@ -14,6 +12,7 @@ type (
 		SetTable(Table) // TODO: Remove this
 		Table() Table
 		AddTable(Table)
+		Tables() Tables
 	}
 
 	schema struct {
@@ -36,24 +35,24 @@ func LoadSchema(ctx context.Context, cfg *config.Config) (Schema, error) {
 
 	s := NewSchema()
 
-	iter := client.Single().Query(ctx, information.ListTablesQuery())
-	defer iter.Stop()
-
-	err = iter.Do(func(row *spanner.Row) error {
-		var ti information.Table
-		if err := row.ToStruct(&ti); err != nil {
-			return err
-		}
-
-		tp := NewTableFromSchema(ti)
-		s.AddTable(tp)
-
-		return nil
-	})
-
+	// Load Tables
+	err = LoadTables(ctx, client, s)
 	if err != nil {
-		return nil, fmt.Errorf("iterating tables: %s", err.Error())
+		return nil, err
 	}
+
+	// Load Columns
+	ts := s.Tables()
+	for ts.HasNext() {
+		t := ts.GetNext()
+		err := LoadColumns(ctx, client, t)
+		if err != nil {
+			return nil, fmt.Errorf("loading columns for table '%s': %s", t.Name(), err.Error())
+		}
+	}
+
+	// reset iterator
+	ts.ResetIterator()
 
 	return s, nil
 }
@@ -67,21 +66,8 @@ func LoadSingleTableSchema(ctx context.Context, cfg *config.Config, t string) (S
 
 	s := NewSchema()
 
-	iter := client.Single().Query(ctx, information.GetTableQuery(t))
-	defer iter.Stop()
-
-	err = iter.Do(func(row *spanner.Row) error {
-		var ti information.Table
-		if err := row.ToStruct(&ti); err != nil {
-			return err
-		}
-
-		tp := NewTableFromSchema(ti)
-		s.SetTable(tp)
-
-		return nil
-	})
-
+	// Load Table
+	err = LoadTable(ctx, client, s, t)
 	if err != nil {
 		return nil, err
 	}
@@ -99,4 +85,8 @@ func (s *schema) Table() Table {
 
 func (s *schema) AddTable(x Table) {
 	s.tables.AddTable(x)
+}
+
+func (s *schema) Tables() Tables {
+	return s.tables
 }
