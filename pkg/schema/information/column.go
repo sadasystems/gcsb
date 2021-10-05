@@ -30,7 +30,7 @@ type (
 		// The data type of the column.
 		SpannerType *string `spanner:"SPANNER_TYPE"`
 		// A string that indicates whether the column is generated. The string is either ALWAYS for a generated column or NEVER for a non-generated column.
-		IsGenerated *string `spanner:"IS_GENERATED"`
+		IsGenerated bool `spanner:"IS_GENERATED"`
 		// A string representing the SQL expression of a generated column. NULL if the column is not a generated column.
 		GenerationExpression *string `spanner:"GENERATION_EXPRESSION"`
 		// A string that indicates whether the generated column is stored. The string is always YES for generated columns, and NULL for non-generated columns.
@@ -39,8 +39,22 @@ type (
 		//   WRITE_ONLY: The column is being backfilled. No read is allowed.
 		// 	 COMMITTED: The column is fully usable.
 		SpannerState *string `spanner:"SPANNER_STATE"`
+		IsPrimaryKey bool    `spanner:"IS_PRIMARY_KEY"`
 	}
 )
+
+const getColSqlStr = `SELECT ` +
+	`c.COLUMN_NAME, c.ORDINAL_POSITION, c.IS_NULLABLE, c.SPANNER_TYPE, c.SPANNER_STATE, ` +
+	`EXISTS (` +
+	`  SELECT 1 FROM INFORMATION_SCHEMA.INDEX_COLUMNS ic ` +
+	`  WHERE ic.TABLE_SCHEMA = "" and ic.TABLE_NAME = c.TABLE_NAME ` +
+	`  AND ic.COLUMN_NAME = c.COLUMN_NAME` +
+	`  AND ic.INDEX_NAME = "PRIMARY_KEY" ` +
+	`) IS_PRIMARY_KEY, ` +
+	`IS_GENERATED = "ALWAYS" AS IS_GENERATED ` +
+	`FROM INFORMATION_SCHEMA.COLUMNS c ` +
+	`WHERE c.TABLE_SCHEMA = "" AND c.TABLE_NAME = @table_name ` +
+	`ORDER BY c.ORDINAL_POSITION`
 
 var (
 	// getColumnsForTableQuery renders a query for fetching all columns for a table from information_schema.columns
@@ -89,7 +103,8 @@ var (
 
 // GetColumnsQuery returns a spanner statement for fetching column information for a table
 func GetColumnsQuery(table string) spanner.Statement {
-	st := spanner.NewStatement(getColumnsForTableQuery.SQL())
+	// st := spanner.NewStatement(getColumnsForTableQuery.SQL())
+	st := spanner.NewStatement(getColSqlStr)
 	st.Params["table_name"] = table
 
 	return st

@@ -17,14 +17,16 @@ type (
 		Nullable() string
 		SetSpannerType(string)
 		SpannerType() string
-		SetIsGenerated(string)
-		IsGenerated() string
+		SetIsGenerated(bool)
+		IsGenerated() bool
 		SetGenerationExpression(string)
 		GenerationExpression() string
 		SetIsStored(string)
 		IsStored() string
 		SetSpannerState(string)
 		SpannerState() string
+		SetPrimaryKey(bool)
+		PrimaryKey() bool
 	}
 
 	column struct {
@@ -32,10 +34,11 @@ type (
 		position             int64
 		nullable             string
 		spannerType          string
-		isGenerated          string
+		isGenerated          bool
 		generationExpression string
 		isStored             string
 		spannerState         string
+		primaryKey           bool
 	}
 )
 
@@ -51,7 +54,7 @@ func NewColumnFromSchema(x information.Column) Column {
 	c.SetPosition(x.OrdinalPosition)
 	c.SetNullable(*x.IsNullable)
 	c.SetSpannerType(*x.SpannerType)
-	c.SetIsGenerated(*x.IsGenerated)
+	c.SetIsGenerated(x.IsGenerated)
 	if x.GenerationExpression != nil {
 		c.SetGenerationExpression(*x.GenerationExpression)
 	}
@@ -60,6 +63,7 @@ func NewColumnFromSchema(x information.Column) Column {
 		c.SetIsStored(*x.IsStored)
 	}
 	c.SetSpannerState(*x.SpannerState)
+	c.SetPrimaryKey(x.IsPrimaryKey)
 
 	return c
 }
@@ -119,11 +123,11 @@ func (c *column) SpannerType() string {
 	return c.spannerType
 }
 
-func (c *column) SetIsGenerated(x string) {
+func (c *column) SetIsGenerated(x bool) {
 	c.isGenerated = x
 }
 
-func (c *column) IsGenerated() string {
+func (c *column) IsGenerated() bool {
 	return c.isGenerated
 }
 
@@ -149,4 +153,12 @@ func (c *column) SetSpannerState(x string) {
 
 func (c *column) SpannerState() string {
 	return c.spannerState
+}
+
+func (c *column) SetPrimaryKey(x bool) {
+	c.primaryKey = x
+}
+
+func (c *column) PrimaryKey() bool {
+	return c.primaryKey
 }

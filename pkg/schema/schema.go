@@ -72,6 +72,13 @@ func LoadSingleTableSchema(ctx context.Context, cfg *config.Config, t string) (S
 		return nil, err
 	}
 
+	// Load Columns
+	tab := s.Table()
+	err = LoadColumns(ctx, client, tab)
+	if err != nil {
+		return nil, fmt.Errorf("loading columns for table '%s': %s", tab.Name(), err.Error())
+	}
+
 	return s, nil
 }
 
