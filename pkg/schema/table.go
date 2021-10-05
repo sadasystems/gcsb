@@ -23,6 +23,7 @@ type (
 		SpannerState() string
 
 		AddColumn(Column)
+		AddIndex(Index)
 	}
 
 	table struct {
@@ -32,12 +33,14 @@ type (
 		parent       Table
 		spannerState string
 		columns      Columns
+		indexes      Indexes
 	}
 )
 
 func NewTable() Table {
 	return &table{
 		columns: NewColumns(),
+		indexes: NewIndexes(),
 	}
 }
 
@@ -147,4 +150,8 @@ func (t *table) SpannerState() string {
 
 func (t *table) AddColumn(x Column) {
 	t.columns.AddColumn(x)
+}
+
+func (t *table) AddIndex(x Index) {
+	t.indexes.AddIndex(x)
 }

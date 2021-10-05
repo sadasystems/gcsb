@@ -39,6 +39,15 @@ type (
 	}
 )
 
+// sql query
+const getIndexSqlstr = `SELECT ` +
+	`INDEX_NAME, IS_UNIQUE, IS_NULL_FILTERED, INDEX_STATE ` +
+	`FROM INFORMATION_SCHEMA.INDEXES ` +
+	`WHERE TABLE_SCHEMA = "" ` +
+	`AND INDEX_NAME != "PRIMARY_KEY" ` +
+	`AND TABLE_NAME = @table_name ` +
+	`AND SPANNER_IS_MANAGED = FALSE `
+
 var (
 	// getIndexesForTableQuery renders a query for fetching all indexes for a table from information_schema.indexes
 	getIndexesForTableQuery = spansql.Query{
@@ -82,7 +91,8 @@ var (
 
 // GetIndexesQuery returns a spanner statement for fetching index information for a table
 func GetIndexesQuery(table string) spanner.Statement {
-	st := spanner.NewStatement(getIndexesForTableQuery.SQL())
+	// st := spanner.NewStatement(getIndexesForTableQuery.SQL())
+	st := spanner.NewStatement(getIndexSqlstr)
 	st.Params["table_name"] = table
 
 	return st

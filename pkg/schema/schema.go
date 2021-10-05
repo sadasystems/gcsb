@@ -45,9 +45,18 @@ func LoadSchema(ctx context.Context, cfg *config.Config) (Schema, error) {
 	ts := s.Tables()
 	for ts.HasNext() {
 		t := ts.GetNext()
+
+		// Load Columns
 		err := LoadColumns(ctx, client, t)
 		if err != nil {
 			return nil, fmt.Errorf("loading columns for table '%s': %s", t.Name(), err.Error())
+		}
+
+		// Load Indexes
+		// Load Indexes
+		err = LoadIndexes(ctx, client, t)
+		if err != nil {
+			return nil, fmt.Errorf("loading indexes for table '%s': %s", t.Name(), err.Error())
 		}
 	}
 
@@ -72,11 +81,18 @@ func LoadSingleTableSchema(ctx context.Context, cfg *config.Config, t string) (S
 		return nil, err
 	}
 
-	// Load Columns
 	tab := s.Table()
+
+	// Load Columns
 	err = LoadColumns(ctx, client, tab)
 	if err != nil {
 		return nil, fmt.Errorf("loading columns for table '%s': %s", tab.Name(), err.Error())
+	}
+
+	// Load Indexes
+	err = LoadIndexes(ctx, client, tab)
+	if err != nil {
+		return nil, fmt.Errorf("loading indexes for table '%s': %s", tab.Name(), err.Error())
 	}
 
 	return s, nil
