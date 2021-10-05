@@ -15,6 +15,9 @@ cloud.google.com/go/spanner
 cloud.google.com/go/spanner/admin/database/apiv1
 cloud.google.com/go/spanner/apiv1
 cloud.google.com/go/spanner/spansql
+# github.com/davecgh/go-spew v1.1.1
+## explicit
+github.com/davecgh/go-spew/spew
 # github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e

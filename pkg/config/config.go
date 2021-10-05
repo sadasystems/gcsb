@@ -99,5 +99,5 @@ func (c *Config) Client(ctx context.Context) (*spanner.Client, error) {
 
 // DB returns the database DSN
 func (c *Config) DB() string {
-	return fmt.Sprintf("projects/%s/instances/%s/database/%s", c.Project, c.Instance, c.Database)
+	return fmt.Sprintf("projects/%s/instances/%s/databases/%s", c.Project, c.Instance, c.Database)
 }
