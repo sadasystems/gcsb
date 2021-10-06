@@ -28,6 +28,7 @@ type (
 		AddIndex(Index)
 		Columns() Columns
 
+		PrimaryKeys() Columns
 		PointInsertStatement() (string, error)
 		PointReadStatement(...string) (string, error)
 	}
@@ -209,4 +210,8 @@ func (t *table) PointReadStatement(predicates ...string) (string, error) {
 	}
 
 	return b.String(), nil
+}
+
+func (t *table) PrimaryKeys() Columns {
+	return t.columns.PrimaryKeys()
 }

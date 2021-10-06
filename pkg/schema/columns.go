@@ -12,6 +12,7 @@ type (
 		Columns() []Column
 		AddColumn(Column)
 		ColumnNames() []string
+		PrimaryKeys() Columns
 	}
 
 	columns struct {
@@ -60,6 +61,18 @@ func (c *columns) ColumnNames() []string {
 	ret := make([]string, 0)
 	for _, col := range c.columns {
 		ret = append(ret, col.Name())
+	}
+
+	return ret
+}
+
+func (c *columns) PrimaryKeys() Columns {
+	ret := NewColumns()
+
+	for _, col := range c.columns {
+		if col.PrimaryKey() {
+			ret.AddColumn(col)
+		}
 	}
 
 	return ret
