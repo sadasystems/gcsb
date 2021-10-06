@@ -11,6 +11,7 @@ type (
 		ColumnIterator
 		Columns() []Column
 		AddColumn(Column)
+		ColumnNames() []string
 	}
 
 	columns struct {
@@ -53,4 +54,13 @@ func (c *columns) Columns() []Column {
 
 func (c *columns) AddColumn(x Column) {
 	c.columns = append(c.columns, x)
+}
+
+func (c *columns) ColumnNames() []string {
+	ret := make([]string, 0)
+	for _, col := range c.columns {
+		ret = append(ret, col.Name())
+	}
+
+	return ret
 }

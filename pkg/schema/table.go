@@ -2,7 +2,9 @@ package schema
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
 	"cloud.google.com/go/spanner"
 	"github.com/sadasystems/gcsb/pkg/schema/information"
@@ -24,6 +26,10 @@ type (
 
 		AddColumn(Column)
 		AddIndex(Index)
+		Columns() Columns
+
+		PointInsertStatement() (string, error)
+		PointReadStatement(...string) (string, error)
 	}
 
 	table struct {
@@ -154,4 +160,53 @@ func (t *table) AddColumn(x Column) {
 
 func (t *table) AddIndex(x Index) {
 	t.indexes.AddIndex(x)
+}
+
+func (t *table) Columns() Columns {
+	return t.columns
+}
+
+func (t *table) PointInsertStatement() (string, error) {
+	var b strings.Builder
+
+	cols := t.columns.ColumnNames()
+	if len(cols) <= 0 {
+		return "", errors.New("no columns associated with table")
+	}
+
+	fmt.Fprintf(&b, "INSERT INTO %s(%s) VALUES(", t.Name(), strings.Join(cols, ", "))
+
+	fmt.Fprintf(&b, "@%s", cols[0])
+	if len(cols) > 1 {
+		for _, s := range cols[1:] {
+			fmt.Fprintf(&b, ", @%s", s)
+		}
+	}
+	b.WriteString(")")
+
+	return b.String(), nil
+}
+
+func (t *table) PointReadStatement(predicates ...string) (string, error) {
+	// TODO: Return error if predicate is not a valid column
+	if len(predicates) <= 0 {
+		return "", errors.New("can not generate point read without predicates")
+	}
+
+	var b strings.Builder
+
+	cols := t.columns.ColumnNames()
+	if len(cols) <= 0 {
+		return "", errors.New("no columns associated with table")
+	}
+
+	fmt.Fprintf(&b, "SELECT %s FROM %s WHERE ", strings.Join(cols, ", "), t.Name())
+	fmt.Fprintf(&b, "%s = @%s", predicates[0], predicates[0])
+	if len(cols) > 1 {
+		for _, s := range predicates[1:] {
+			fmt.Fprintf(&b, " AND %s = @%s", s, s)
+		}
+	}
+
+	return b.String(), nil
 }
