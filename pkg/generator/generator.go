@@ -130,6 +130,9 @@ func GetDefaultGeneratorForType(t spansql.Type) (data.Generator, error) {
 			Source: rand.NewSource(time.Now().UnixNano()),
 		})
 	case spansql.Timestamp:
+		g, err = data.NewTimestampGenerator(data.TimestampGeneratorConfig{
+			Source: rand.NewSource(time.Now().UnixNano()),
+		})
 	case spansql.Date:
 		g, err = data.NewDateGenerator(data.DateGeneratorConfig{
 			Source: rand.NewSource(time.Now().UnixNano()),
