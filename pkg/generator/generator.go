@@ -139,5 +139,13 @@ func GetDefaultGeneratorForType(t spansql.Type) (data.Generator, error) {
 		})
 	}
 
+	// The column is an array, re-use our generator
+	if t.Array {
+		g, err = data.NewArrayGenerator(data.ArrayGeneratorConfig{
+			Generator: g,
+			Length:    10,
+		})
+	}
+
 	return g, err
 }
