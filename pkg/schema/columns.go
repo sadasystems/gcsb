@@ -13,6 +13,7 @@ type (
 		AddColumn(Column)
 		ColumnNames() []string
 		PrimaryKeys() Columns
+		Len() int
 	}
 
 	columns struct {

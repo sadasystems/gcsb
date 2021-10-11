@@ -7,6 +7,9 @@ instance: gcsb-test-1
 # Spanner Database Name
 database: gcsb-test-db-11
 
+# Number of threads (goroutines) used to generate load
+threads: 10
+
 # Number of GCP connections to establish to spanner
 num_conns: 10
 
@@ -33,15 +36,22 @@ pool:
 # Values such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 max_execution_time: 1h
 
+# Total number of operations
+operations: 1000
+
 # If table exists, we will detect the column types of the table and use DEFAULT data generators
 # Here is where you can override those generators
 tables:
+  - name: SingleSingers
+    row_count: 1000
+    operations:
+      read: 25
+      write: 75
   - name: TestGCSB1
     row_count: 1000
     operations:
       read: 25
       write: 75
-    primary_key: SingerID
     columns:
       - name: SingerID
         type: STRING(1024)

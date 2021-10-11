@@ -1,3 +1,3 @@
 package data
 
-type GeneraorMap map[string]Generator
+type GeneratorMap map[string]Generator
