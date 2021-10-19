@@ -1,8 +1,8 @@
 package data
 
 import (
+	"fmt"
 	"math/rand"
-	"time"
 )
 
 // Assert that Int64Generator implements Generator
@@ -16,30 +16,35 @@ type (
 		min int64
 		max int64
 	}
-
-	Int64GeneratorConfig struct {
-		Source  rand.Source
-		Range   bool
-		Minimum int64
-		Maximum int64
-	}
 )
 
-func NewInt64Generator(cfg Int64GeneratorConfig) (*Int64Generator, error) {
+func NewInt64Generator(cfg Config) (Generator, error) {
 	ret := &Int64Generator{
-		r:   cfg.Range,
-		min: cfg.Minimum,
-		max: cfg.Maximum,
-	}
-
-	if cfg.Source == nil {
-		ret.src = rand.New(rand.NewSource(time.Now().UnixNano()))
-	} else {
-		ret.src = rand.New(cfg.Source)
+		src: rand.New(cfg.Source()),
 	}
 
 	ret.f = ret.nextRandom
-	if ret.r {
+	if cfg.Range() {
+		ret.r = true
+
+		switch min := cfg.Minimum().(type) {
+		case int:
+			ret.min = int64(min)
+		case int64:
+			ret.min = min
+		default:
+			return nil, fmt.Errorf("minimum '%s' of type '%T' invalid for int64 generator", min, min)
+		}
+
+		switch max := cfg.Maximum().(type) {
+		case int:
+			ret.max = int64(max)
+		case int64:
+			ret.max = max
+		default:
+			return nil, fmt.Errorf("maximum '%s' of type '%T' invalid for int64 generator", max, max)
+		}
+
 		ret.f = ret.nextRanged
 	}
 

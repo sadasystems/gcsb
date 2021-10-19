@@ -1,8 +1,8 @@
 package data
 
 import (
+	"fmt"
 	"math/rand"
-	"time"
 )
 
 // Assert that BooleanGenerator implements Generator
@@ -16,29 +16,27 @@ type (
 		f         func() interface{}
 		v         bool
 	}
-
-	BooleanGeneratorConfig struct {
-		Source rand.Source
-		Static bool
-		Value  bool
-	}
 )
 
-func NewBooleanGenerator(cfg BooleanGeneratorConfig) (*BooleanGenerator, error) {
-	ret := &BooleanGenerator{
-		src: cfg.Source,
+func NewBooleanGenerator(cfg Config) (Generator, error) {
+	if cfg == nil {
+		cfg = NewConfig()
 	}
 
-	if ret.src == nil {
-		ret.src = rand.NewSource(time.Now().UnixNano())
+	ret := &BooleanGenerator{
+		src: cfg.Source(),
 	}
 
 	// Generate  values by defualt
 
 	// If the config is for a static value, return it instead
 	ret.f = ret.next
-	if cfg.Static {
-		ret.v = cfg.Value
+	if cfg.Static() {
+		v, ok := cfg.Value().(bool)
+		if !ok {
+			return nil, fmt.Errorf("value '%s' of type '%T' is invalid for static bool generation", cfg.Value(), cfg.Value())
+		}
+		ret.v = v
 		ret.f = ret.nextStatic
 	}
 

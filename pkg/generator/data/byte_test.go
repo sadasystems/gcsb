@@ -1,16 +1,13 @@
 package data
 
 import (
-	"math/rand"
 	"testing"
-	"time"
 )
 
 func BenchmarkRandomByteGenerator(b *testing.B) {
-	bg, err := NewRandomByteGenerator(RandomByteGeneratorConfig{
-		Length: 4,
-		Source: rand.NewSource(time.Now().UnixNano()),
-	})
+	cfg := NewConfig()
+	cfg.SetLength(4)
+	bg, err := NewRandomByteGenerator(cfg)
 	if err != nil {
 		panic(err)
 	}

@@ -3,7 +3,6 @@ package data
 import (
 	"errors"
 	"math/rand"
-	"time"
 )
 
 // Assert that RandomByteGenerator implements Generator
@@ -14,26 +13,16 @@ type (
 		len int
 		src *rand.Rand
 	}
-
-	RandomByteGeneratorConfig struct {
-		Length int
-		Source rand.Source
-	}
 )
 
-func NewRandomByteGenerator(cfg RandomByteGeneratorConfig) (*RandomByteGenerator, error) {
-	if cfg.Length <= 0 {
+func NewRandomByteGenerator(cfg Config) (Generator, error) {
+	if cfg.Length() <= 0 {
 		return nil, errors.New("string length must be > 0")
 	}
 
-	src := cfg.Source
-	if src == nil {
-		src = rand.NewSource(time.Now().UnixNano())
-	}
-
 	ret := &RandomByteGenerator{
-		len: cfg.Length,
-		src: rand.New(src),
+		len: cfg.Length(),
+		src: rand.New(cfg.Source()),
 	}
 
 	return ret, nil

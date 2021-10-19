@@ -2,7 +2,6 @@ package data
 
 import (
 	"math/rand"
-	"time"
 	"unsafe"
 )
 
@@ -30,14 +29,10 @@ type (
 	}
 )
 
-func NewStringGenerator(cfg StringGeneratorConfig) (*StringGenerator, error) {
+func NewStringGenerator(cfg Config) (Generator, error) {
 	ret := &StringGenerator{
-		len: cfg.Length,
-		src: cfg.Source,
-	}
-
-	if ret.src == nil {
-		ret.src = rand.NewSource(time.Now().UnixNano())
+		src: cfg.Source(),
+		len: cfg.Length(),
 	}
 
 	return ret, nil

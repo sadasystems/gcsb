@@ -1,9 +1,7 @@
 package data
 
 import (
-	"math/rand"
 	"testing"
-	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -12,7 +10,7 @@ func TestArrayGenerator(t *testing.T) {
 	Convey("ArrayGenerator", t, func() {
 
 		Convey("Missing  Generator", func() {
-			bg, err := NewBooleanGenerator(BooleanGeneratorConfig{})
+			bg, err := NewBooleanGenerator(NewConfig())
 			So(err, ShouldBeNil)
 			So(bg, ShouldNotBeNil)
 
@@ -25,7 +23,7 @@ func TestArrayGenerator(t *testing.T) {
 		})
 
 		Convey("Invalid Length", func() {
-			bg, err := NewBooleanGenerator(BooleanGeneratorConfig{})
+			bg, err := NewBooleanGenerator(NewConfig())
 			So(err, ShouldBeNil)
 			So(bg, ShouldNotBeNil)
 
@@ -39,7 +37,7 @@ func TestArrayGenerator(t *testing.T) {
 		})
 
 		Convey("Next", func() {
-			bg, err := NewBooleanGenerator(BooleanGeneratorConfig{})
+			bg, err := NewBooleanGenerator(NewConfig())
 			So(err, ShouldBeNil)
 			So(bg, ShouldNotBeNil)
 
@@ -68,9 +66,7 @@ func TestArrayGenerator(t *testing.T) {
 }
 
 func BenchmarkBooleanArrayGenerator(b *testing.B) {
-	bg, err := NewBooleanGenerator(BooleanGeneratorConfig{
-		Source: rand.NewSource(time.Now().UnixNano()),
-	})
+	bg, err := NewBooleanGenerator(NewConfig())
 	if err != nil {
 		panic(err)
 	}
@@ -92,9 +88,7 @@ func BenchmarkBooleanArrayGenerator(b *testing.B) {
 }
 
 func BenchmarkInt64ArrayGenerator(b *testing.B) {
-	ig, err := NewInt64Generator(Int64GeneratorConfig{
-		Source: rand.NewSource(time.Now().UnixNano()),
-	})
+	ig, err := NewInt64Generator(NewConfig())
 	if err != nil {
 		panic(err)
 	}

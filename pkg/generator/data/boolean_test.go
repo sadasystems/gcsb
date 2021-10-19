@@ -1,9 +1,7 @@
 package data
 
 import (
-	"math/rand"
 	"testing"
-	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -12,17 +10,14 @@ func TestBooleanGenerator(t *testing.T) {
 	Convey("BooleanGenerator", t, func() {
 
 		Convey("Missing  Source", func() {
-			bg, err := NewBooleanGenerator(BooleanGeneratorConfig{})
+			bg, err := NewBooleanGenerator(NewConfig())
 
 			So(err, ShouldBeNil)
 			So(bg, ShouldNotBeNil)
-			So(bg.src, ShouldNotBeNil)
 		})
 
 		Convey("Next", func() {
-			bg, err := NewBooleanGenerator(BooleanGeneratorConfig{
-				Source: rand.NewSource(time.Now().UnixNano()),
-			})
+			bg, err := NewBooleanGenerator(NewConfig())
 
 			So(bg, ShouldNotBeNil)
 			So(err, ShouldBeNil)
@@ -41,10 +36,10 @@ func TestBooleanGenerator(t *testing.T) {
 		})
 
 		Convey("Static value", func() {
-			bg, err := NewBooleanGenerator(BooleanGeneratorConfig{
-				Static: true,
-				Value:  false,
-			})
+			cfg := NewConfig()
+			cfg.SetStatic(true)
+			cfg.SetValue(false)
+			bg, err := NewBooleanGenerator(cfg)
 
 			So(err, ShouldBeNil)
 			So(bg, ShouldNotBeNil)
@@ -57,9 +52,7 @@ func TestBooleanGenerator(t *testing.T) {
 }
 
 func BenchmarkBooleanGenerator(b *testing.B) {
-	bg, err := NewBooleanGenerator(BooleanGeneratorConfig{
-		Source: rand.NewSource(time.Now().UnixNano()),
-	})
+	bg, err := NewBooleanGenerator(NewConfig())
 	if err != nil {
 		panic(err)
 	}
@@ -72,10 +65,10 @@ func BenchmarkBooleanGenerator(b *testing.B) {
 }
 
 func BenchmarkStaticBooleanGenerator(b *testing.B) {
-	bg, err := NewBooleanGenerator(BooleanGeneratorConfig{
-		Static: true,
-		Value:  false,
-	})
+	cfg := NewConfig()
+	cfg.SetStatic(true)
+	cfg.SetValue(false)
+	bg, err := NewBooleanGenerator(cfg)
 	if err != nil {
 		panic(err)
 	}
