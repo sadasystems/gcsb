@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 )
@@ -16,28 +17,33 @@ type (
 		max   int64
 		r     bool
 	}
-
-	TimestampGeneratorConfig struct {
-		Source  rand.Source
-		Range   bool // If true, only generate dates within min and max range
-		Minimum time.Time
-		Maximum time.Time
-	}
 )
 
-func NewTimestampGenerator(cfg TimestampGeneratorConfig) (*TimestampGenerator, error) {
-	ret := &TimestampGenerator{}
-
-	if cfg.Source == nil {
-		ret.src = rand.NewSource(time.Now().UnixNano())
-	} else {
-		ret.src = cfg.Source
+func NewTimestampGenerator(cfg Config) (Generator, error) {
+	ret := &TimestampGenerator{
+		src: cfg.Source(),
 	}
 
-	if cfg.Range {
+	if cfg.Range() {
 		ret.r = true
-		ret.min = cfg.Minimum.Unix()
-		ret.max = cfg.Maximum.Unix()
+
+		switch min := cfg.Minimum().(type) {
+		case time.Time:
+			ret.min = min.Unix()
+		case int64:
+			ret.min = min
+		default:
+			return nil, fmt.Errorf("minimum '%s' of type '%T' invalid for timestamp generator", min, min)
+		}
+
+		switch max := cfg.Maximum().(type) {
+		case time.Time:
+			ret.max = max.Unix()
+		case int64:
+			ret.max = max
+		default:
+			return nil, fmt.Errorf("maximum '%s' of type '%T' invalid for timestamp generator", max, max)
+		}
 	} else {
 		ret.min = time.Date(defaultDateMinYear, 1, 0, 0, 0, 0, 0, time.UTC).Unix()
 		ret.max = time.Date(defaultDateMaxYear, 1, 0, 0, 0, 0, 0, time.UTC).Unix()

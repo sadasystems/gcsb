@@ -7,10 +7,11 @@ var _ Validate = (*Generator)(nil)
 
 type (
 	Generator struct {
-		Type         string `mapstructure:"type"`
-		Length       int    `mapstructure:"length"`
-		PrefixLength int    `mapstructure:"prefix_length"`
-		Range        Range  `mapstructure:"range"`
+		Type         *string  `mapstructure:"type"`
+		Length       *int     `mapstructure:"length"`
+		PrefixLength *int     `mapstructure:"prefix_length"`
+		Seed         *int64   `mapstructure:"seed"`
+		Range        []*Range `mapstructure:"range"`
 	}
 )
 

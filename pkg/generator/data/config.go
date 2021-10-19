@@ -25,18 +25,21 @@ type (
 		Source() rand.Source
 		SetRange(bool)
 		Range() bool
+		SetGenerator(Generator)
+		Generator() Generator
 	}
 
 	generatorConfig struct {
-		source  rand.Source
-		begin   interface{}
-		end     interface{}
-		length  int
-		static  bool
-		value   interface{}
-		minimum interface{}
-		maximum interface{}
-		ranged  bool
+		source    rand.Source
+		begin     interface{}
+		end       interface{}
+		length    int
+		static    bool
+		value     interface{}
+		minimum   interface{}
+		maximum   interface{}
+		ranged    bool
+		generator Generator
 	}
 )
 
@@ -118,4 +121,12 @@ func (c *generatorConfig) SetRange(x bool) {
 
 func (c *generatorConfig) Range() bool {
 	return c.ranged
+}
+
+func (c *generatorConfig) SetGenerator(x Generator) {
+	c.generator = x
+}
+
+func (c *generatorConfig) Generator() Generator {
+	return c.generator
 }

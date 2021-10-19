@@ -36,39 +36,23 @@ pool:
 # Values such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 max_execution_time: 1h
 
-# Total number of operations
-operations: 1000
+operations: 
+  # Total number of operations
+  total: 5000
+  # Read operation weight
+  read: 25
+  # Write operation weight 
+  write: 75
 
 # If table exists, we will detect the column types of the table and use DEFAULT data generators
 # Here is where you can override those generators
 tables:
   - name: SingleSingers
-    row_count: 1000
-    operations:
-      read: 25
-      write: 75
-  - name: TestGCSB1
-    row_count: 1000
-    operations:
-      read: 25
-      write: 75
     columns:
-      - name: SingerID
-        type: STRING(1024)
+      - name: FirstName
         generator:
-          type: hexadecimal
           length: 100
-          prefix_length: 10
-          key_range:
-            start: AAAAAAAAAA
-            end: ZZZZZZZZZZ
-      - name: FullName
-        type: STRING(1024)
-        generator:
-          type: string
-          length: 40
-      - name: Age
-        type: INT64
-        generator:
-          type: int64
-          length: 100
+          range:
+            begin: AAA
+            end: ZZZ
+      - name: test

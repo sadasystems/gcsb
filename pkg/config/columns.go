@@ -7,9 +7,9 @@ var _ Validate = (*Column)(nil)
 
 type (
 	Column struct {
-		Name      string    `mapstructure:"name"`
-		Type      string    `mapstructure:"type"`
-		Generator Generator `mapstructure:"generator"`
+		Name      string     `mapstructure:"name"`
+		Type      *string    `mapstructure:"type"`
+		Generator *Generator `mapstructure:"generator"`
 	}
 )
 

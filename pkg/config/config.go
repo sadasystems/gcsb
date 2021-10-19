@@ -24,14 +24,14 @@ type (
 	}
 
 	Config struct {
-		Project       string  `mapstructure:"project"`
-		Instance      string  `mapstructure:"instance"`
-		Database      string  `mapstructure:"database"`
-		Threads       int     `mapstructure:"threads"`
-		NumConns      int     `mapstructure:"num_conns"`
-		Pool          Pool    `mapstructure:"pool"`
-		Tables        []Table `mapstructure:"tables"`
-		Operations    int     `mapstructure:"operations"`
+		Project       string     `mapstructure:"project"`
+		Instance      string     `mapstructure:"instance"`
+		Database      string     `mapstructure:"database"`
+		Threads       int        `mapstructure:"threads"`
+		NumConns      int        `mapstructure:"num_conns"`
+		Pool          Pool       `mapstructure:"pool"`
+		Tables        []Table    `mapstructure:"tables"`
+		Operations    Operations `mapstructure:"operations"`
 		clientOnce    sync.Once
 		client        *spanner.Client
 		contextOnce   sync.Once

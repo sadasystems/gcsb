@@ -21,12 +21,6 @@ type (
 		len int
 		src rand.Source
 	}
-
-	// StringGeneratorConfig contains config values for the generator
-	StringGeneratorConfig struct {
-		Length int
-		Source rand.Source
-	}
 )
 
 func NewStringGenerator(cfg Config) (Generator, error) {
