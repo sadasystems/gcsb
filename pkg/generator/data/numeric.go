@@ -13,9 +13,6 @@ var _ Generator = (*NumericGenerator)(nil)
 type (
 	NumericGenerator struct {
 		src *rand.Rand
-		r   bool
-		min int64
-		max int64
 	}
 )
 
