@@ -37,7 +37,10 @@ func TestArrayGenerator(t *testing.T) {
 		})
 
 		Convey("Next", func() {
-			bg, err := NewBooleanGenerator(NewConfig())
+			bcfg := NewConfig()
+			bcfg.SetStatic(true)
+			bcfg.SetValue(true)
+			bg, err := NewBooleanGenerator(bcfg)
 			So(err, ShouldBeNil)
 			So(bg, ShouldNotBeNil)
 
@@ -50,7 +53,7 @@ func TestArrayGenerator(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(ag, ShouldNotBeNil)
 
-			v, ok := ag.Next().([]interface{})
+			v, ok := ag.Next().([]bool)
 			So(ok, ShouldBeTrue)
 			So(v, ShouldNotBeNil)
 
@@ -60,11 +63,8 @@ func TestArrayGenerator(t *testing.T) {
 
 			So(v, ShouldHaveLength, tagl.l)
 
-			// So now v is not an interface type, so we can't further type assert it?
-			// So I guess we assert each element?
 			for _, e := range v {
-				_, ok := e.(bool)
-				So(ok, ShouldBeTrue)
+				So(e, ShouldBeTrue)
 			}
 		})
 	})
