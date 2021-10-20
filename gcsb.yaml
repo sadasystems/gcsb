@@ -47,12 +47,28 @@ operations:
 # If table exists, we will detect the column types of the table and use DEFAULT data generators
 # Here is where you can override those generators
 tables:
+  - name: SingleSingersNoArray
+    columns:
+      - name: FirstName
+        generator:
+          length: 10
+      - name: LastName
+        generator:
+          length: 10
+      - name: ByteField
+        generator:
+          length: 10
   - name: SingleSingers
     columns:
       - name: FirstName
         generator:
-          length: 100
+          length: 10
           range:
             begin: AAA
             end: ZZZ
-      - name: test
+      - name: LastName
+        generator:
+          length: 10
+      - name: ByteField
+        generator:
+          length: 10
