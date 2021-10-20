@@ -66,6 +66,14 @@ func (j *WorkerPoolLoadJob) InsertMapBatch() {
 			batch = make([]*spanner.Mutation, 0, j.BatchSize)
 		}
 	}
+
+	// Flush the buffer at the end
+	if len(batch) > 0 {
+		_, err := j.Client.Apply(j.Context, batch)
+		if err != nil {
+			log.Printf("error in write transaction: %s", err.Error())
+		}
+	}
 }
 
 func (j *WorkerPoolLoadJob) InsertMap() {
