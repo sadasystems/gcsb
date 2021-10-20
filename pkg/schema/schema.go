@@ -13,6 +13,7 @@ type (
 		Table() Table
 		AddTable(Table)
 		Tables() Tables
+		GetTable(string) Table
 	}
 
 	schema struct {
@@ -112,4 +113,16 @@ func (s *schema) AddTable(x Table) {
 
 func (s *schema) Tables() Tables {
 	return s.tables
+}
+
+func (s *schema) GetTable(x string) Table {
+	defer s.tables.ResetIterator()
+	for s.tables.HasNext() {
+		t := s.tables.GetNext()
+		if t.Name() == x {
+			return t
+		}
+	}
+
+	return nil
 }

@@ -7,6 +7,8 @@ var (
 	_ Generator = (*ArrayGenerator)(nil)
 )
 
+// error in write transaction: spanner: code = "InvalidArgument", desc = "client doesn't support type []interface {}"
+
 type (
 	ArrayGenerator struct {
 		g Generator

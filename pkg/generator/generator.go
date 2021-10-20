@@ -217,10 +217,13 @@ func GetDefaultGeneratorForType(t spansql.Type, cfg data.Config) (data.Generator
 		g, err = data.NewTimestampGenerator(cfg)
 	case spansql.Date:
 		g, err = data.NewDateGenerator(cfg)
+	case spansql.Numeric:
+		g, err = data.NewNumericGenerator(cfg)
 	}
 
 	// The column is an array, re-use our generator
 	if t.Array {
+		cfg.SetGenerator(g)
 		if cfg.Length() <= 0 {
 			// TODO: Make default array length configurable
 			cfg.SetLength(10) // If no length is specified, default to 10
@@ -265,4 +268,5 @@ func SetDataConfigFromRange(cpCfg data.Config, r *config.Range) {
 	if cpCfg.Minimum() != 0 || cpCfg.Maximum() != 0 {
 		cpCfg.SetRange(true)
 	}
+
 }

@@ -29,7 +29,7 @@ type (
 		GeneratorMap data.GeneratorMap
 		Batch        bool
 		BatchSize    int
-		WaitGroup    sync.WaitGroup
+		WaitGroup    *sync.WaitGroup
 	}
 
 	WorkerPoolRunJob struct{} // Implement pool.Job

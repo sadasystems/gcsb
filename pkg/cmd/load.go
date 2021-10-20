@@ -3,22 +3,25 @@ package cmd
 import (
 	"log"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/sadasystems/gcsb/pkg/config"
 	"github.com/sadasystems/gcsb/pkg/schema"
+	"github.com/sadasystems/gcsb/pkg/workload"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 func init() {
 	loadCmd.Flags().StringVarP(&loadTable, "table", "t", "", "Table name to load")
+	loadCmd.Flags().IntVarP(&loadOperations, "operations", "o", 1000, "Number of records to load")
+	viper.BindPFlag("operations", loadCmd.Flags().Lookup("operations"))
 
 	rootCmd.AddCommand(loadCmd)
 }
 
 var (
 	// Flags
-	loadTable string
+	loadTable      string
+	loadOperations int
 
 	// Command
 	loadCmd = &cobra.Command{
@@ -55,14 +58,33 @@ var (
 			// Infer the table schema from the database
 			log.Println("Infering schema from database")
 			var s schema.Schema
-			s, err = schema.LoadSingleTableSchema(ctx, cfg, loadTable) // TODO: Should the load command support multiple targets?
+			// s, err = schema.LoadSingleTableSchema(ctx, cfg, loadTable) // TODO: Should the load command support multiple targets?
+			s, err = schema.LoadSchema(ctx, cfg)
 			if err != nil {
 				log.Fatalf("unable to infer schema: %s", err.Error())
 			}
 
-			//
+			// Get a constructor for a workload
+			constructor, err := workload.GetWorkloadConstructor("NOTYETSUPPORTED")
+			if err != nil {
+				log.Fatalf("unable to get workload constructor: %s", err.Error())
+			}
 
-			spew.Dump(s)
+			// Create a workload
+			wl, err := constructor(workload.WorkloadConfig{
+				Context: ctx,
+				Config:  cfg,
+				Schema:  s,
+			})
+			if err != nil {
+				log.Fatalf("unable to create workload: %s", err.Error())
+			}
+
+			// Execute the load phase
+			err = wl.Load(loadTable)
+			if err != nil {
+				log.Fatalf("unable to execute load operation: %s", err.Error())
+			}
 		},
 	}
 )
