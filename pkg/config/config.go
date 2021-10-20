@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"cloud.google.com/go/spanner"
 	"github.com/hashicorp/go-multierror"
@@ -13,7 +14,7 @@ import (
 )
 
 var (
-	// Assert that Config implements Validate
+	// Assert that config implements Validate
 	_ Validate = (*Config)(nil)
 )
 
@@ -21,12 +22,22 @@ type (
 	Validate interface {
 		Validate() error
 	}
+
 	Config struct {
-		Project  string `mapstructure:"project"`
-		Instance string `mapstructure:"instance"`
-		Database string `mapstructure:"database"`
-		NumConns int    `mapstructure:"num_conns"`
-		Pool     Pool   `mapstructure:"pool"`
+		Project       string     `mapstructure:"project"`
+		Instance      string     `mapstructure:"instance"`
+		Database      string     `mapstructure:"database"`
+		Threads       int        `mapstructure:"threads"`
+		NumConns      int        `mapstructure:"num_conns"`
+		Pool          Pool       `mapstructure:"pool"`
+		Tables        []Table    `mapstructure:"tables"`
+		Operations    Operations `mapstructure:"operations"`
+		clientOnce    sync.Once
+		client        *spanner.Client
+		contextOnce   sync.Once
+		ctx           context.Context
+		context       context.Context
+		contextCancel context.CancelFunc
 	}
 )
 
@@ -76,28 +87,51 @@ func (c *Config) Validate() error {
 
 // Client returns a configured spanner client
 func (c *Config) Client(ctx context.Context) (*spanner.Client, error) {
-	client, err := spanner.NewClientWithConfig(ctx, c.DB(), spanner.ClientConfig{
-		SessionPoolConfig: spanner.SessionPoolConfig{
-			MaxOpened:           uint64(c.Pool.MaxOpened),
-			MinOpened:           uint64(c.Pool.MinOpened),
-			MaxIdle:             uint64(c.Pool.MaxIdle),
-			WriteSessions:       c.Pool.WriteSessions,
-			HealthCheckWorkers:  c.Pool.HealthcheckWorkers,
-			HealthCheckInterval: c.Pool.HealthcheckInterval,
-			TrackSessionHandles: c.Pool.TrackSessionHandles,
+	var err error
+	c.clientOnce.Do(func() {
+		c.client, err = spanner.NewClientWithConfig(ctx, c.DB(), spanner.ClientConfig{
+			SessionPoolConfig: spanner.SessionPoolConfig{
+				MaxOpened:           uint64(c.Pool.MaxOpened),
+				MinOpened:           uint64(c.Pool.MinOpened),
+				MaxIdle:             uint64(c.Pool.MaxIdle),
+				WriteSessions:       c.Pool.WriteSessions,
+				HealthCheckWorkers:  c.Pool.HealthcheckWorkers,
+				HealthCheckInterval: c.Pool.HealthcheckInterval,
+				TrackSessionHandles: c.Pool.TrackSessionHandles,
+			},
 		},
-	},
-		option.WithGRPCConnectionPool(c.NumConns),
+			option.WithGRPCConnectionPool(c.NumConns),
 
-		// TODO(grpc/grpc-go#1388) using connection pool without WithBlock
-		// can cause RPCs to fail randomly. We can delete this after the issue is fixed.
-		option.WithGRPCDialOption(grpc.WithBlock()),
-	)
+			// TODO(grpc/grpc-go#1388) using connection pool without WithBlock
+			// can cause RPCs to fail randomly. We can delete this after the issue is fixed.
+			option.WithGRPCDialOption(grpc.WithBlock()),
+		)
 
-	return client, err
+	})
+
+	return c.client, err
 }
 
 // DB returns the database DSN
 func (c *Config) DB() string {
-	return fmt.Sprintf("projects/%s/instances/%s/database/%s", c.Project, c.Instance, c.Database)
+	return fmt.Sprintf("projects/%s/instances/%s/databases/%s", c.Project, c.Instance, c.Database)
+}
+
+func (c *Config) Context() (context.Context, context.CancelFunc) {
+	c.contextOnce.Do(func() {
+		c.ctx = context.Background()
+		c.context, c.contextCancel = context.WithCancel(c.ctx)
+	})
+
+	return c.context, c.contextCancel
+}
+
+func (c *Config) Table(name string) *Table {
+	for _, t := range c.Tables {
+		if t.Name == name {
+			return &t
+		}
+	}
+
+	return nil
 }

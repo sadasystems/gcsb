@@ -5,6 +5,7 @@ go 1.16
 require (
 	cloud.google.com/go v0.93.3
 	cloud.google.com/go/spanner v1.25.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.2.1

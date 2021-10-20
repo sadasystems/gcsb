@@ -1,8 +1,10 @@
 package data
 
 import (
+	"fmt"
 	"math/rand"
-	"time"
+
+	"cloud.google.com/go/spanner/spansql"
 )
 
 // Assert that Float64Generator implements Generator
@@ -16,31 +18,31 @@ type (
 		min float64
 		max float64
 	}
-
-	Float64GeneratorConfig struct {
-		Source  rand.Source
-		Range   bool
-		Minimum float64
-		Maximum float64
-	}
 )
 
-func NewFloat64Generator(cfg Float64GeneratorConfig) (*Float64Generator, error) {
+func NewFloat64Generator(cfg Config) (Generator, error) {
 	ret := &Float64Generator{
-		r:   cfg.Range,
-		min: cfg.Minimum,
-		max: cfg.Maximum,
-	}
-
-	if cfg.Source == nil {
-		ret.src = rand.New(rand.NewSource(time.Now().UnixNano()))
-	} else {
-		ret.src = rand.New(cfg.Source)
+		src: rand.New(cfg.Source()),
 	}
 
 	ret.f = ret.nextRandom
-	if ret.r {
+	if cfg.Range() {
 		ret.f = ret.nextRanged
+		ret.r = true
+
+		switch min := cfg.Minimum().(type) {
+		case float64:
+			ret.min = min
+		default:
+			return nil, fmt.Errorf("minimum '%s' of type '%T' invalid for float64 generator", min, min)
+		}
+
+		switch max := cfg.Maximum().(type) {
+		case float64:
+			ret.max = max
+		default:
+			return nil, fmt.Errorf("maximum '%s' of type '%T' invalid for float64 generator", max, max)
+		}
 	}
 
 	return ret, nil
@@ -56,4 +58,8 @@ func (g *Float64Generator) nextRandom() interface{} {
 
 func (g *Float64Generator) nextRanged() interface{} {
 	return g.min + g.src.Float64()*(g.max-g.min)
+}
+
+func (g *Float64Generator) Type() spansql.TypeBase {
+	return spansql.Float64
 }

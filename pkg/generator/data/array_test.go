@@ -1,9 +1,7 @@
 package data
 
 import (
-	"math/rand"
 	"testing"
-	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -12,41 +10,42 @@ func TestArrayGenerator(t *testing.T) {
 	Convey("ArrayGenerator", t, func() {
 
 		Convey("Missing  Generator", func() {
-			bg, err := NewBooleanGenerator(BooleanGeneratorConfig{})
+			bg, err := NewBooleanGenerator(NewConfig())
 			So(err, ShouldBeNil)
 			So(bg, ShouldNotBeNil)
 
-			ag, err := NewArrayGenerator(ArrayGeneratorConfig{
-				Length: 10,
-			})
+			cfg := NewConfig()
+			cfg.SetLength(10)
+			ag, err := NewArrayGenerator(cfg)
 
 			So(err, ShouldNotBeNil)
 			So(ag, ShouldBeNil)
 		})
 
 		Convey("Invalid Length", func() {
-			bg, err := NewBooleanGenerator(BooleanGeneratorConfig{})
+			bg, err := NewBooleanGenerator(NewConfig())
 			So(err, ShouldBeNil)
 			So(bg, ShouldNotBeNil)
 
-			ag, err := NewArrayGenerator(ArrayGeneratorConfig{
-				Generator: bg,
-				Length:    -5,
-			})
+			cfg := NewConfig()
+			cfg.SetGenerator(bg)
+			cfg.SetLength(-5)
+			ag, err := NewArrayGenerator(cfg)
 
 			So(err, ShouldNotBeNil)
 			So(ag, ShouldBeNil)
 		})
 
 		Convey("Next", func() {
-			bg, err := NewBooleanGenerator(BooleanGeneratorConfig{})
+			bg, err := NewBooleanGenerator(NewConfig())
 			So(err, ShouldBeNil)
 			So(bg, ShouldNotBeNil)
 
-			ag, err := NewArrayGenerator(ArrayGeneratorConfig{
-				Generator: bg,
-				Length:    10,
-			})
+			cfg := NewConfig()
+			cfg.SetLength(10)
+			cfg.SetGenerator(bg)
+
+			ag, err := NewArrayGenerator(cfg)
 
 			So(err, ShouldBeNil)
 			So(ag, ShouldNotBeNil)
@@ -55,7 +54,11 @@ func TestArrayGenerator(t *testing.T) {
 			So(ok, ShouldBeTrue)
 			So(v, ShouldNotBeNil)
 
-			So(v, ShouldHaveLength, ag.l)
+			tagl, ok := ag.(*ArrayGenerator)
+			So(ok, ShouldBeTrue)
+			So(tagl, ShouldNotBeNil)
+
+			So(v, ShouldHaveLength, tagl.l)
 
 			// So now v is not an interface type, so we can't further type assert it?
 			// So I guess we assert each element?
@@ -68,17 +71,15 @@ func TestArrayGenerator(t *testing.T) {
 }
 
 func BenchmarkBooleanArrayGenerator(b *testing.B) {
-	bg, err := NewBooleanGenerator(BooleanGeneratorConfig{
-		Source: rand.NewSource(time.Now().UnixNano()),
-	})
+	bg, err := NewBooleanGenerator(NewConfig())
 	if err != nil {
 		panic(err)
 	}
 
-	ag, err := NewArrayGenerator(ArrayGeneratorConfig{
-		Generator: bg,
-		Length:    10,
-	})
+	cfg := NewConfig()
+	cfg.SetLength(10)
+	cfg.SetGenerator(bg)
+	ag, err := NewArrayGenerator(cfg)
 
 	if err != nil {
 		panic(err)
@@ -92,17 +93,15 @@ func BenchmarkBooleanArrayGenerator(b *testing.B) {
 }
 
 func BenchmarkInt64ArrayGenerator(b *testing.B) {
-	ig, err := NewInt64Generator(Int64GeneratorConfig{
-		Source: rand.NewSource(time.Now().UnixNano()),
-	})
+	ig, err := NewInt64Generator(NewConfig())
 	if err != nil {
 		panic(err)
 	}
 
-	ag, err := NewArrayGenerator(ArrayGeneratorConfig{
-		Generator: ig,
-		Length:    10,
-	})
+	cfg := NewConfig()
+	cfg.SetLength(10)
+	cfg.SetGenerator(ig)
+	ag, err := NewArrayGenerator(cfg)
 
 	if err != nil {
 		panic(err)

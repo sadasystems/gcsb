@@ -4,6 +4,7 @@ import (
 	"math"
 	"math/big"
 
+	"cloud.google.com/go/spanner/spansql"
 	"github.com/sadasystems/gcsb/pkg/config"
 )
 
@@ -117,4 +118,8 @@ func (g *HexavigesimalGenerator) Decode(s string) uint64 {
 		res += uint64(byteOffset) * bpow.Exp(b26, bidx, nil).Uint64()
 	}
 	return res
+}
+
+func (g *HexavigesimalGenerator) Type() spansql.TypeBase {
+	return spansql.String
 }

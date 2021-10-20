@@ -70,7 +70,7 @@ func TestConfig(t *testing.T) {
 				err = v.Unmarshal(&c)
 				So(err, ShouldBeNil)
 
-				So(c.DB(), ShouldEqual, fmt.Sprintf("projects/%s/instances/%s/database/%s", c.Project, c.Instance, c.Database))
+				So(c.DB(), ShouldEqual, fmt.Sprintf("projects/%s/instances/%s/databases/%s", c.Project, c.Instance, c.Database))
 			})
 		})
 	})

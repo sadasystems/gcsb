@@ -1,7 +1,6 @@
 package information
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -17,6 +16,6 @@ func TestTable(t *testing.T) {
 		So(st, ShouldNotBeNil)
 		So(st.Params["table_name"], ShouldEqual, "foo")
 
-		fmt.Println(st)
+		// fmt.Println(st)
 	})
 }

@@ -1,9 +1,7 @@
 package data
 
 import (
-	"math/rand"
 	"testing"
-	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -11,15 +9,13 @@ import (
 func TestInt64Generator(t *testing.T) {
 	Convey("Int64Generator", t, func() {
 		Convey("Nil Source", func() {
-			fg, err := NewInt64Generator(Int64GeneratorConfig{})
+			fg, err := NewInt64Generator(NewConfig())
 			So(err, ShouldBeNil)
 			So(fg, ShouldNotBeNil)
 		})
 
 		Convey("Random", func() {
-			fg, err := NewInt64Generator(Int64GeneratorConfig{
-				Source: rand.NewSource(time.Now().UnixNano()),
-			})
+			fg, err := NewInt64Generator(NewConfig())
 
 			So(err, ShouldBeNil)
 			So(fg, ShouldNotBeNil)
@@ -32,12 +28,11 @@ func TestInt64Generator(t *testing.T) {
 		})
 
 		Convey("Ranged", func() {
-			fg, err := NewInt64Generator(Int64GeneratorConfig{
-				Source:  rand.NewSource(time.Now().UnixNano()),
-				Range:   true,
-				Minimum: 10,
-				Maximum: 100000,
-			})
+			cfg := NewConfig()
+			cfg.SetRange(true)
+			cfg.SetMinimum(10)
+			cfg.SetMaximum(100000)
+			fg, err := NewInt64Generator(cfg)
 
 			So(err, ShouldBeNil)
 			So(fg, ShouldNotBeNil)
@@ -54,9 +49,7 @@ func TestInt64Generator(t *testing.T) {
 }
 
 func BenchmarkRandomInt64Generator(b *testing.B) {
-	bg, err := NewInt64Generator(Int64GeneratorConfig{
-		Source: rand.NewSource(time.Now().UnixNano()),
-	})
+	bg, err := NewInt64Generator(NewConfig())
 	if err != nil {
 		panic(err)
 	}
@@ -69,12 +62,12 @@ func BenchmarkRandomInt64Generator(b *testing.B) {
 }
 
 func BenchmarkRangedInt64Generator(b *testing.B) {
-	bg, err := NewInt64Generator(Int64GeneratorConfig{
-		Source:  rand.NewSource(time.Now().UnixNano()),
-		Range:   true,
-		Minimum: 1,
-		Maximum: 1000000,
-	})
+	cfg := NewConfig()
+	cfg.SetRange(true)
+	cfg.SetMinimum(10)
+	cfg.SetMaximum(100000)
+
+	bg, err := NewInt64Generator(cfg)
 	if err != nil {
 		panic(err)
 	}

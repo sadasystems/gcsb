@@ -2,9 +2,9 @@ package data
 
 import (
 	"fmt"
+
+	"cloud.google.com/go/spanner/spansql"
 	"github.com/sadasystems/gcsb/pkg/config"
-	"math/rand"
-	"time"
 )
 
 // Generator is the interface that all data generators must satisfy
@@ -38,10 +38,9 @@ func NewCombinedGenerator(cfg CombinedGeneratorConfig) (*CombinedGenerator, erro
 	}
 
 	// TODO: Should stringgenerator receive the same rand.Source as the combined generator?
-	sg, err := NewStringGenerator(StringGeneratorConfig{
-		Length: gen.stringLength - gen.prefixLength,
-		Source: rand.NewSource(time.Now().UnixNano() * int64(gen.min)),
-	})
+	scfg := NewConfig()
+	scfg.SetLength(gen.stringLength - gen.prefixLength)
+	sg, err := NewStringGenerator(scfg)
 
 	if err != nil {
 		return nil, err
@@ -49,9 +48,9 @@ func NewCombinedGenerator(cfg CombinedGeneratorConfig) (*CombinedGenerator, erro
 
 	// TODO: Should HexavigesimaGenerator receive the same rand.Source as combined generator?
 	hg, err := NewHexavigesimalGenerator(HexavigesimalGeneratorConfig{
-		Length:  cfg.PrefixLength,
-		Minimum: gen.min,
-		Maximum: gen.max,
+		Length:   cfg.PrefixLength,
+		Minimum:  gen.min,
+		Maximum:  gen.max,
 		KeyRange: cfg.KeyRange,
 	})
 
@@ -71,4 +70,8 @@ func (s *CombinedGenerator) Next() interface{} {
 	ret := fmt.Sprintf("%s%s", prefix, rest)
 
 	return ret
+}
+
+func (s *CombinedGenerator) Type() spansql.TypeBase {
+	return spansql.Bytes
 }

@@ -1,9 +1,7 @@
 package data
 
 import (
-	"math/rand"
 	"testing"
-	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -11,15 +9,13 @@ import (
 func TestFloat64Generator(t *testing.T) {
 	Convey("Float64Generator", t, func() {
 		Convey("Nil Source", func() {
-			fg, err := NewFloat64Generator(Float64GeneratorConfig{})
+			fg, err := NewFloat64Generator(NewConfig())
 			So(err, ShouldBeNil)
 			So(fg, ShouldNotBeNil)
 		})
 
 		Convey("Random", func() {
-			fg, err := NewFloat64Generator(Float64GeneratorConfig{
-				Source: rand.NewSource(time.Now().UnixNano()),
-			})
+			fg, err := NewFloat64Generator(NewConfig())
 
 			So(err, ShouldBeNil)
 			So(fg, ShouldNotBeNil)
@@ -32,12 +28,11 @@ func TestFloat64Generator(t *testing.T) {
 		})
 
 		Convey("Ranged", func() {
-			fg, err := NewFloat64Generator(Float64GeneratorConfig{
-				Source:  rand.NewSource(time.Now().UnixNano()),
-				Range:   true,
-				Minimum: 5.0,
-				Maximum: -5.0,
-			})
+			cfg := NewConfig()
+			cfg.SetRange(true)
+			cfg.SetMinimum(5.0)
+			cfg.SetMaximum(-5.0)
+			fg, err := NewFloat64Generator(cfg)
 
 			So(err, ShouldBeNil)
 			So(fg, ShouldNotBeNil)
@@ -54,9 +49,7 @@ func TestFloat64Generator(t *testing.T) {
 }
 
 func BenchmarkRandomFloatGenerator(b *testing.B) {
-	bg, err := NewFloat64Generator(Float64GeneratorConfig{
-		Source: rand.NewSource(time.Now().UnixNano()),
-	})
+	bg, err := NewFloat64Generator(NewConfig())
 	if err != nil {
 		panic(err)
 	}
@@ -69,12 +62,11 @@ func BenchmarkRandomFloatGenerator(b *testing.B) {
 }
 
 func BenchmarkRangedFloatGenerator(b *testing.B) {
-	bg, err := NewFloat64Generator(Float64GeneratorConfig{
-		Source:  rand.NewSource(time.Now().UnixNano()),
-		Range:   true,
-		Minimum: 0,
-		Maximum: 1000,
-	})
+	cfg := NewConfig()
+	cfg.SetRange(true)
+	cfg.SetMinimum(0)
+	cfg.SetMaximum(1000)
+	bg, err := NewFloat64Generator(cfg)
 	if err != nil {
 		panic(err)
 	}

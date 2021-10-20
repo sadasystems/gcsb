@@ -2,8 +2,9 @@ package data
 
 import (
 	"math/rand"
-	"time"
 	"unsafe"
+
+	"cloud.google.com/go/spanner/spansql"
 )
 
 // Assert that StringGenerator implements Generator
@@ -22,22 +23,12 @@ type (
 		len int
 		src rand.Source
 	}
-
-	// StringGeneratorConfig contains config values for the generator
-	StringGeneratorConfig struct {
-		Length int
-		Source rand.Source
-	}
 )
 
-func NewStringGenerator(cfg StringGeneratorConfig) (*StringGenerator, error) {
+func NewStringGenerator(cfg Config) (Generator, error) {
 	ret := &StringGenerator{
-		len: cfg.Length,
-		src: cfg.Source,
-	}
-
-	if ret.src == nil {
-		ret.src = rand.NewSource(time.Now().UnixNano())
+		src: cfg.Source(),
+		len: cfg.Length(),
 	}
 
 	return ret, nil
@@ -65,4 +56,8 @@ func (s *StringGenerator) Next() interface{} {
 	}
 
 	return *(*string)(unsafe.Pointer(&b))
+}
+
+func (s *StringGenerator) Type() spansql.TypeBase {
+	return spansql.String
 }
