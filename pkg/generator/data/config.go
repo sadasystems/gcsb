@@ -7,6 +7,7 @@ import (
 
 type (
 	Config interface {
+		Copy() Config
 		SetBegin(interface{})
 		Begin() interface{}
 		SetEnd(interface{})
@@ -45,6 +46,11 @@ type (
 
 func NewConfig() Config {
 	return &generatorConfig{}
+}
+
+func (c *generatorConfig) Copy() Config {
+	cp := *c
+	return &cp
 }
 
 func (c *generatorConfig) SetSource(x rand.Source) {
