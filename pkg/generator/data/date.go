@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/civil"
+	"cloud.google.com/go/spanner/spansql"
 )
 
 // Assert that DateGenerator implements Generator
@@ -70,4 +71,8 @@ func NewDateGenerator(cfg Config) (Generator, error) {
 func (g *DateGenerator) Next() interface{} {
 	sec := rand.Int63n(g.delta) + g.min
 	return civil.DateOf(time.Unix(sec, 0))
+}
+
+func (g *DateGenerator) Type() spansql.TypeBase {
+	return spansql.Date
 }

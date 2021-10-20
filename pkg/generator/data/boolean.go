@@ -3,6 +3,8 @@ package data
 import (
 	"fmt"
 	"math/rand"
+
+	"cloud.google.com/go/spanner/spansql"
 )
 
 // Assert that BooleanGenerator implements Generator
@@ -64,4 +66,8 @@ func (b *BooleanGenerator) next() interface{} {
 	b.remaining--
 
 	return result
+}
+
+func (b *BooleanGenerator) Type() spansql.TypeBase {
+	return spansql.Bool
 }

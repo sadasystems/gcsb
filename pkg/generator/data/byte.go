@@ -3,6 +3,8 @@ package data
 import (
 	"errors"
 	"math/rand"
+
+	"cloud.google.com/go/spanner/spansql"
 )
 
 // Assert that RandomByteGenerator implements Generator
@@ -32,4 +34,8 @@ func (g *RandomByteGenerator) Next() interface{} {
 	ret := make([]byte, g.len)
 	_, _ = g.src.Read(ret)
 	return ret
+}
+
+func (g *RandomByteGenerator) Type() spansql.TypeBase {
+	return spansql.Bytes
 }

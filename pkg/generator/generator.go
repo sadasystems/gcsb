@@ -188,6 +188,8 @@ func GetDefaultGeneratorForType(t spansql.Type, cfg data.Config) (data.Generator
 		cfg = data.NewConfig()
 	}
 
+	cfg.SetSpannerType(t)
+
 	var g data.Generator
 	var err error
 

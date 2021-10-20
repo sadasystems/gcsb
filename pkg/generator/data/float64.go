@@ -3,6 +3,8 @@ package data
 import (
 	"fmt"
 	"math/rand"
+
+	"cloud.google.com/go/spanner/spansql"
 )
 
 // Assert that Float64Generator implements Generator
@@ -56,4 +58,8 @@ func (g *Float64Generator) nextRandom() interface{} {
 
 func (g *Float64Generator) nextRanged() interface{} {
 	return g.min + g.src.Float64()*(g.max-g.min)
+}
+
+func (g *Float64Generator) Type() spansql.TypeBase {
+	return spansql.Float64
 }

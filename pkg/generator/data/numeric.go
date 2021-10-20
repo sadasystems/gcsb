@@ -3,6 +3,8 @@ package data
 import (
 	"math/big"
 	"math/rand"
+
+	"cloud.google.com/go/spanner/spansql"
 )
 
 // Assert that NumericGenerator implements Generator
@@ -25,4 +27,8 @@ func NewNumericGenerator(cfg Config) (Generator, error) {
 
 func (g *NumericGenerator) Next() interface{} {
 	return big.NewRat(g.src.Int63(), g.src.Int63())
+}
+
+func (g *NumericGenerator) Type() spansql.TypeBase {
+	return spansql.Numeric
 }

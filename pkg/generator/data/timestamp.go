@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+
+	"cloud.google.com/go/spanner/spansql"
 )
 
 // Assert that TimestampGenerator implements Generator
@@ -57,4 +59,8 @@ func NewTimestampGenerator(cfg Config) (Generator, error) {
 func (g *TimestampGenerator) Next() interface{} {
 	sec := rand.Int63n(g.delta) + g.min
 	return time.Unix(sec, 0)
+}
+
+func (g *TimestampGenerator) Type() spansql.TypeBase {
+	return spansql.Timestamp
 }

@@ -3,6 +3,8 @@ package data
 import (
 	"math/rand"
 	"unsafe"
+
+	"cloud.google.com/go/spanner/spansql"
 )
 
 // Assert that StringGenerator implements Generator
@@ -54,4 +56,8 @@ func (s *StringGenerator) Next() interface{} {
 	}
 
 	return *(*string)(unsafe.Pointer(&b))
+}
+
+func (s *StringGenerator) Type() spansql.TypeBase {
+	return spansql.String
 }

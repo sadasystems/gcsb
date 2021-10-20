@@ -3,6 +3,8 @@ package data
 import (
 	"fmt"
 	"math/rand"
+
+	"cloud.google.com/go/spanner/spansql"
 )
 
 // Assert that Int64Generator implements Generator
@@ -61,4 +63,8 @@ func (g *Int64Generator) nextRandom() interface{} {
 
 func (g *Int64Generator) nextRanged() interface{} {
 	return g.src.Int63n(g.max-g.min) + g.min
+}
+
+func (g *Int64Generator) Type() spansql.TypeBase {
+	return spansql.Int64
 }

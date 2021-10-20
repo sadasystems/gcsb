@@ -1,6 +1,10 @@
 package data
 
-import "math/rand"
+import (
+	"math/rand"
+
+	"cloud.google.com/go/spanner/spansql"
+)
 
 // Assert that SubRangeGenerator implements Generator
 var _ Generator = (*SubRangeGenerator)(nil)
@@ -26,4 +30,12 @@ func (g *SubRangeGenerator) Next() interface{} {
 
 func (g *SubRangeGenerator) AddGenerator(x Generator) {
 	g.generators = append(g.generators, x)
+}
+
+func (g *SubRangeGenerator) Type() spansql.TypeBase {
+	if len(g.generators) < 1 {
+		panic("Can not determine type base for subrange generator that has no generators")
+	}
+
+	return g.generators[0].Type()
 }

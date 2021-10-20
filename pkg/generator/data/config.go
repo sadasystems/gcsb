@@ -3,6 +3,8 @@ package data
 import (
 	"math/rand"
 	"time"
+
+	"cloud.google.com/go/spanner/spansql"
 )
 
 type (
@@ -28,19 +30,22 @@ type (
 		Range() bool
 		SetGenerator(Generator)
 		Generator() Generator
+		SetSpannerType(spansql.Type)
+		SpannerType() spansql.Type
 	}
 
 	generatorConfig struct {
-		source    rand.Source
-		begin     interface{}
-		end       interface{}
-		length    int
-		static    bool
-		value     interface{}
-		minimum   interface{}
-		maximum   interface{}
-		ranged    bool
-		generator Generator
+		source      rand.Source
+		begin       interface{}
+		end         interface{}
+		length      int
+		static      bool
+		value       interface{}
+		minimum     interface{}
+		maximum     interface{}
+		ranged      bool
+		generator   Generator
+		spannerType spansql.Type
 	}
 )
 
@@ -135,4 +140,12 @@ func (c *generatorConfig) SetGenerator(x Generator) {
 
 func (c *generatorConfig) Generator() Generator {
 	return c.generator
+}
+
+func (c *generatorConfig) SetSpannerType(x spansql.Type) {
+	c.spannerType = x
+}
+
+func (c *generatorConfig) SpannerType() spansql.Type {
+	return c.spannerType
 }

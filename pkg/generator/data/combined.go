@@ -3,6 +3,7 @@ package data
 import (
 	"fmt"
 
+	"cloud.google.com/go/spanner/spansql"
 	"github.com/sadasystems/gcsb/pkg/config"
 )
 
@@ -69,4 +70,8 @@ func (s *CombinedGenerator) Next() interface{} {
 	ret := fmt.Sprintf("%s%s", prefix, rest)
 
 	return ret
+}
+
+func (s *CombinedGenerator) Type() spansql.TypeBase {
+	return spansql.Bytes
 }
