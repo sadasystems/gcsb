@@ -71,6 +71,7 @@ var (
 			}
 
 			// Create a workload
+			log.Println("Creating workload")
 			wl, err := constructor(workload.WorkloadConfig{
 				Context: ctx,
 				Config:  cfg,
@@ -81,6 +82,7 @@ var (
 			}
 
 			// Execute the load phase
+			log.Println("Executing load phase")
 			err = wl.Load(loadTable)
 			if err != nil {
 				log.Fatalf("unable to execute load operation: %s", err.Error())
