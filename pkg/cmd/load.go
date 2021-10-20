@@ -13,7 +13,7 @@ import (
 func init() {
 	loadCmd.Flags().StringVarP(&loadTable, "table", "t", "", "Table name to load")
 	loadCmd.Flags().IntVarP(&loadOperations, "operations", "o", 1000, "Number of records to load")
-	viper.BindPFlag("operations", loadCmd.Flags().Lookup("operations"))
+	viper.BindPFlag("operations.total", loadCmd.Flags().Lookup("operations"))
 
 	rootCmd.AddCommand(loadCmd)
 }

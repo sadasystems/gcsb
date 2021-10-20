@@ -48,7 +48,7 @@ func (j *WorkerPoolLoadJob) Execute() {
 func (j *WorkerPoolLoadJob) InsertMapBatch() {
 	batch := make([]*spanner.Mutation, 0, j.BatchSize)
 
-	for i := 0; i <= j.RowCount; i++ {
+	for i := 1; i <= j.RowCount; i++ {
 		m := make(map[string]interface{}, len(j.GeneratorMap))
 		for k, v := range j.GeneratorMap {
 			m[k] = v.Next()
