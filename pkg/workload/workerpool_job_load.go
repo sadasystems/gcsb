@@ -13,9 +13,6 @@ import (
 var (
 	// Assert that WorkerPoolLoadJob implements pool.Job
 	_ pool.Job = (*WorkerPoolLoadJob)(nil)
-
-	// Assert that WorkerPoolRunJob implements pool.Job
-	_ pool.Job = (*WorkerPoolRunJob)(nil)
 )
 
 type (
@@ -31,8 +28,6 @@ type (
 		BatchSize    int
 		WaitGroup    *sync.WaitGroup
 	}
-
-	WorkerPoolRunJob struct{} // Implement pool.Job
 )
 
 func (j *WorkerPoolLoadJob) Execute() {
@@ -107,5 +102,3 @@ func (j *WorkerPoolLoadJob) InsertDML() {
 		}
 	}
 }
-
-func (j *WorkerPoolRunJob) Execute() {}

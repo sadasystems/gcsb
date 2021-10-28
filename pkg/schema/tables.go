@@ -9,6 +9,7 @@ type (
 
 	Tables interface {
 		TableIterator
+		Len() int
 		Tables() []Table
 		AddTable(Table)
 	}

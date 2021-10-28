@@ -14,47 +14,25 @@ import (
 // TODO: Handle static value generator (table samples)
 // TODO: Handle random string generator vs ranged string generation
 
-var errUnimplemented = errors.New("data generator is not implemented")
+func GetDataGeneratorMap(cfg config.Config, s schema.Schema) (map[string]data.GeneratorMap, error) {
+	tables := s.Tables()
+	ret := make(map[string]data.GeneratorMap, tables.Len())
 
-// GetGenerator returns a configured generator for the table config
-func GetGenerator(config config.TableConfigGenerator) (data.Generator, error) {
-	cfg := data.NewConfig()
-	var gen data.Generator
-	var err error
+	// Iterate over tables in the schema
+	for tables.HasNext() {
+		t := tables.GetNext()
 
-	switch config.Type {
-	case "hexadecimal":
-		gen, err = data.NewHexavigesimalGenerator(data.HexavigesimalGeneratorConfig{
-			Length:   config.Length,
-			KeyRange: &config.KeyRange,
-		})
-	case "combined":
-		gen, err = data.NewCombinedGenerator(data.CombinedGeneratorConfig{
-			StringLength: config.Length,
-			PrefixLength: config.PrefixLength,
-			KeyRange:     &config.KeyRange,
-		})
-	case "string":
-		cfg.SetLength(config.Length)
-		gen, err = data.NewStringGenerator(cfg)
+		gm, err := GetDataGeneratorMapForTable(cfg, t)
+		if err != nil {
+			return nil, fmt.Errorf("error getting generator map for table '%s': %s", t.Name(), err.Error())
+		}
 
-	case "int64":
-		cfg.SetRange(false) // ??? Why set min/max without a range?
-		gen, err = data.NewInt64Generator(cfg)
-	default:
-		err = errUnimplemented
+		ret[t.Name()] = gm
 	}
 
-	return gen, err
-}
+	tables.ResetIterator()
 
-func GetDataGeneratorMap(cfg config.Config, s schema.Schema) (data.GeneratorMap, error) {
-	// col
-	// gm := make(data.GeneratorMap, s.Tables().GetNext().Columns().Len())
-
-	// Iterate over the schema
-
-	return nil, nil
+	return ret, nil
 }
 
 // TODO: Check that schema column and config column are compatible types

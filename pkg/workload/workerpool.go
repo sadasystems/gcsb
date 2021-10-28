@@ -2,12 +2,14 @@ package workload
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
 	"cloud.google.com/go/spanner"
 	"github.com/sadasystems/gcsb/pkg/config"
 	"github.com/sadasystems/gcsb/pkg/generator"
+	"github.com/sadasystems/gcsb/pkg/generator/operation"
 	"github.com/sadasystems/gcsb/pkg/schema"
 	"github.com/sadasystems/gcsb/pkg/workload/pool"
 )
@@ -57,6 +59,15 @@ func (w *WorkerPool) Initialize() error {
 	w.Pool.Start()
 
 	w.initialized = true
+
+	return nil
+}
+
+// Stop the worker pool
+func (w *WorkerPool) Stop() error {
+	if w.Pool != nil {
+		w.Pool.Stop()
+	}
 
 	return nil
 }
@@ -112,6 +123,83 @@ func (w *WorkerPool) Load(tableName string) error {
 	return nil
 }
 
-func (w *WorkerPool) Run() error {
+func (w *WorkerPool) Run(tableName string) error {
+	// Initialize the pool
+	if !w.initialized {
+		err := w.Initialize()
+		if err != nil {
+			return fmt.Errorf("failed to initialize workload: %s", err.Error())
+		}
+	}
+
+	// Grab table from schema
+	table := w.Schema.GetTable(tableName)
+	if table == nil {
+		return fmt.Errorf("table '%s' missing from schema", tableName)
+	}
+
+	// Determine number of operations per thread
+	opsPerJob := w.Config.Operations.Total / w.Config.Threads
+
+	// Need to fetch primary key(s) from target table
+	pKeyNames := table.PrimaryKeyNames()
+	if len(pKeyNames) <= 0 {
+		return errors.New("unable to determine primary key column for READ operations")
+	}
+
+	// Use primary keys to TABLESAMPLE
+	samples, err := generator.SampleTable(w.Config, w.Context, w.client, table)
+	if err != nil {
+		return fmt.Errorf("error sampling table: %s", err.Error())
+	}
+
+	// Create 1 job per thread
+	for i := 1; i <= w.Config.Threads; i++ {
+		// Create operation selector
+		sel, err := operation.NewOperationSelector(w.Config)
+		if err != nil {
+			return fmt.Errorf("getting operation selector: %s", err.Error())
+		}
+
+		// Construct generator map for table inserts
+		insertMap, err := generator.GetDataGeneratorMapForTable(*w.Config, table)
+		if err != nil {
+			return fmt.Errorf("getting insert generator map: %s", err.Error())
+		}
+
+		// initialize a static value generator for READ ops (readMap)
+		gen, err := generator.GetReadGeneratorMap(samples, table.PrimaryKeyNames())
+		if err != nil {
+			return fmt.Errorf("error getting read generator: %s", err.Error())
+		}
+
+		// Create Job
+		j := &WorkerPoolRunJob{
+			Context:           w.Context,
+			Client:            w.client,
+			TableName:         tableName,
+			ReadGenerator:     gen,
+			WriteMap:          insertMap,
+			OperationSelector: sel,
+			WaitGroup:         &w.wg,
+			StaleReads:        w.Config.Operations.ReadStale,
+			Staleness:         w.Config.Operations.Staleness,
+			Operations:        opsPerJob,
+			Table:             table,
+		}
+
+		// Keep a reference to the job for no reason
+		w.Jobs = append(w.Jobs, j)
+
+		// Increment waitgroup
+		w.wg.Add(1)
+
+		// Submit job
+		w.Pool.Submit(j)
+	}
+
+	// Block until all jobs complete
+	w.wg.Wait()
+
 	return nil
 }

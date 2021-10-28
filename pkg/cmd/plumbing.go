@@ -8,6 +8,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/sadasystems/gcsb/pkg/config"
+	"github.com/sadasystems/gcsb/pkg/generator"
 	"github.com/sadasystems/gcsb/pkg/schema"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -18,13 +19,19 @@ func init() {
 
 	plumbingConfigDumpCmd.Flags().BoolVarP(&plumbingConfigDumpCmdValidate, "validate", "v", false, "Validate the configuration")
 
+	plumbingTableSampleCmd.Flags().StringVarP(&plumbingSampleTable, "table", "t", "", "Table to sample")
+	plumbingTableSampleCmd.Flags().IntVarP(&plumbingSampleSamples, "samples", "s", 20, "number of samples to print")
+
 	plumbingConfigCmd.AddCommand(plumbingConfigDumpCmd)
 	plumbingSchemaCmd.AddCommand(plumbingSchemaInferCmd)
-	plumbingCmd.AddCommand(plumbingConfigCmd, plumbingSchemaCmd)
+	plumbingTableCmd.AddCommand(plumbingTableSampleCmd)
+	plumbingCmd.AddCommand(plumbingConfigCmd, plumbingSchemaCmd, plumbingTableCmd)
 	rootCmd.AddCommand(plumbingCmd)
 }
 
 var (
+	plumbingSampleTable           string
+	plumbingSampleSamples         int
 	plumbingConfigDumpCmdValidate bool   // Validate the configuration
 	plumbingSchemaInferTableName  string // table name to inspect
 
@@ -96,6 +103,58 @@ var (
 				log.Fatalf("unable to load schema: %s", err.Error())
 			}
 			spew.Dump(s)
+		},
+	}
+
+	plumbingTableCmd = &cobra.Command{
+		Use:   "table",
+		Short: "Table related commands",
+		Long:  ``,
+	}
+
+	plumbingTableSampleCmd = &cobra.Command{
+		Use:   "sample",
+		Short: "Sample rows from a table",
+		Long:  ``,
+		Run: func(cmd *cobra.Command, args []string) {
+			if plumbingSampleTable == "" {
+				log.Fatal("table name must be set (-t)")
+			}
+
+			ctx := context.Background()
+			cfg, err := config.NewConfig(viper.GetViper())
+			if err != nil {
+				log.Fatalf("unable to parse configuration: %s", err.Error())
+			}
+
+			client, err := cfg.Client(ctx)
+			if err != nil {
+				log.Fatalf("error creating spanner client: %s", err.Error())
+			}
+
+			s, err := schema.LoadSchema(ctx, cfg)
+			if err != nil {
+				log.Fatalf("unable to load schema: %s", err.Error())
+			}
+
+			table := s.GetTable(plumbingSampleTable)
+			if table == nil {
+				log.Fatalf("could not find table '%s'", plumbingSampleTable)
+			}
+
+			samples, err := generator.SampleTable(cfg, ctx, client, table)
+			if err != nil {
+				log.Fatalf("error sampling table: %s", err.Error())
+			}
+
+			gen, err := generator.GetReadGeneratorMap(samples, table.PrimaryKeyNames())
+			if err != nil {
+				log.Fatalf("error getting read generator: %s", err.Error())
+			}
+
+			for i := 0; i <= plumbingSampleSamples; i++ {
+				log.Printf("%+v", gen.Next())
+			}
 		},
 	}
 )

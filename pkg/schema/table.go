@@ -27,10 +27,13 @@ type (
 		AddColumn(Column)
 		AddIndex(Index)
 		Columns() Columns
+		ColumnNames() []string
 
 		PrimaryKeys() Columns
+		PrimaryKeyNames() []string
 		PointInsertStatement() (string, error)
 		PointReadStatement(...string) (string, error)
+		TableSample(float64) (string, error)
 	}
 
 	table struct {
@@ -212,6 +215,43 @@ func (t *table) PointReadStatement(predicates ...string) (string, error) {
 	return b.String(), nil
 }
 
+func (t *table) TableSample(x float64) (string, error) {
+	pkeys := t.PrimaryKeyNames()
+
+	if len(pkeys) <= 0 {
+		return "", errors.New("no primary keys associated with table")
+	}
+
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "SELECT %s FROM %s TABLESAMPLE BERNOULLI (%f PERCENT)", strings.Join(pkeys, ", "), t.Name(), x)
+
+	return b.String(), nil
+}
+
 func (t *table) PrimaryKeys() Columns {
 	return t.columns.PrimaryKeys()
+}
+
+func (t *table) PrimaryKeyNames() []string {
+	cols := t.columns.PrimaryKeys()
+	ret := make([]string, 0, cols.Len())
+	for cols.HasNext() {
+		col := cols.GetNext()
+		ret = append(ret, col.Name())
+	}
+
+	return ret
+}
+
+func (t *table) ColumnNames() []string {
+	ret := make([]string, 0, t.columns.Len())
+	for t.columns.HasNext() {
+		c := t.columns.GetNext()
+		ret = append(ret, c.Name())
+	}
+
+	t.columns.ResetIterator()
+
+	return ret
 }

@@ -58,7 +58,6 @@ var (
 			// Infer the table schema from the database
 			log.Println("Infering schema from database")
 			var s schema.Schema
-			// s, err = schema.LoadSingleTableSchema(ctx, cfg, loadTable) // TODO: Should the load command support multiple targets?
 			s, err = schema.LoadSchema(ctx, cfg)
 			if err != nil {
 				log.Fatalf("unable to infer schema: %s", err.Error())

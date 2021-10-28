@@ -8,10 +8,10 @@ instance: gcsb-test-1
 database: gcsb-test-db-11
 
 # Number of threads (goroutines) used to generate load
-threads: 10
+threads: 50
 
 # Number of GCP connections to establish to spanner
-num_conns: 10
+num_conns: 30
 
 # Spanner Connection Pool Settings
 pool:
@@ -34,6 +34,7 @@ pool:
 
 # Maximum execution time. If set, we will run until we hit operation count, or this time limit. Whichever comes first.
 # Values such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+# NOT CURRENTLY SUPPORTED
 max_execution_time: 1h
 
 operations: 
@@ -43,6 +44,14 @@ operations:
   read: 25
   # Write operation weight 
   write: 75
+  # The percentage of rows to sample for generating read operations
+  sample_size: 50
+  # Perform stale read operations. Default: false (meaning perform strong reads)
+  read_stale: false
+  # If read_stale is true, use exact staleness time duration for read operations
+  # See: https://cloud.google.com/spanner/docs/reads#perform-stale-read
+  # Values such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+  staleness: 15s
 
 # If table exists, we will detect the column types of the table and use DEFAULT data generators
 # Here is where you can override those generators
