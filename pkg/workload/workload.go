@@ -17,7 +17,8 @@ type (
 		// Initialize is called once before any operations can proceed
 		Initialize() error
 		Load(string) error
-		Run() error
+		Run(string) error
+		Stop() error
 	}
 
 	WorkloadConfig struct {
