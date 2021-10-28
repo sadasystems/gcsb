@@ -8,15 +8,15 @@ benchmark:
 	go test -run ^$$ -bench . -benchmem ./...
 
 patch:
-	git tag "$(svu patch)"
+	git tag "$$(svu patch)"
 	git push --tags
 
 minor:
-	git tag "$(svu minor)"
+	git tag "$$(svu minor)"
 	git push --tags
 
 major:
-	git tag "$(svu major)"
+	git tag "$$(svu major)"
 	git push --tags
 
 release:
