@@ -7,6 +7,8 @@ It's like YCSB but with more Google.
   - [Test](#test)
   - [Load](#load)
     - [Single table load](#single-table-load)
+  - [Run](#run)
+    - [Single table run](#single-table-run)
   
 ## Build
 
@@ -31,3 +33,15 @@ gcsb load -t TABLE_NAME -o NUM_ROWS
 ```
 
 Additionally, please see `gcsb load --help` for additional configuration options.
+
+## Run
+
+### Single table run
+
+By default, GCSB will detect the table schema and create default random data generators based on the columns it finds. In order to tune the values the generator creates, you must create override configurations in the gcsb.yaml file. Please see that file's documentation for more information.
+
+```sh
+gcsb run -t TABLE_NAME -o NUM_ROWS
+```
+
+Additionally, please see `gcsb run --help` for additional configuration options.
