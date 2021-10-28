@@ -11,12 +11,12 @@ var _ Validate = (*Operations)(nil)
 
 type (
 	Operations struct {
-		Total      int           `mapstructure:"total"`
-		Read       int           `mapstructure:"read"`
-		Write      int           `mapstructure:"write"`
-		SampleSize float64       `mapstructure:"sample_size"`
-		ReadStale  bool          `mapstructure:"read_stale"`
-		Staleness  time.Duration `mapstructure:"staleness"`
+		Total      int           `mapstructure:"total" yaml:"total"`
+		Read       int           `mapstructure:"read" yaml:"read"`
+		Write      int           `mapstructure:"write" yaml:"write"`
+		SampleSize float64       `mapstructure:"sample_size" yaml:"sample_size"`
+		ReadStale  bool          `mapstructure:"read_stale" yaml:"read_stale"`
+		Staleness  time.Duration `mapstructure:"staleness" yaml:"staleness"`
 	}
 )
 
