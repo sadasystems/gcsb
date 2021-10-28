@@ -9,7 +9,7 @@ type (
 	Generator struct {
 		Type         *string  `mapstructure:"type"`
 		Length       *int     `mapstructure:"length"`
-		PrefixLength *int     `mapstructure:"prefix_length"`
+		PrefixLength *int     `mapstructure:"prefix_length" yaml:"prefix_length"`
 		Seed         *int64   `mapstructure:"seed"`
 		Range        []*Range `mapstructure:"range"`
 	}

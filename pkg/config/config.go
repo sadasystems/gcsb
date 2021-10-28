@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"cloud.google.com/go/spanner"
 	"github.com/hashicorp/go-multierror"
@@ -24,20 +25,21 @@ type (
 	}
 
 	Config struct {
-		Project       string     `mapstructure:"project"`
-		Instance      string     `mapstructure:"instance"`
-		Database      string     `mapstructure:"database"`
-		Threads       int        `mapstructure:"threads"`
-		NumConns      int        `mapstructure:"num_conns"`
-		Pool          Pool       `mapstructure:"pool"`
-		Tables        []Table    `mapstructure:"tables"`
-		Operations    Operations `mapstructure:"operations"`
-		clientOnce    sync.Once
-		client        *spanner.Client
-		contextOnce   sync.Once
-		ctx           context.Context
-		context       context.Context
-		contextCancel context.CancelFunc
+		Project          string        `mapstructure:"project" yaml:"project"`
+		Instance         string        `mapstructure:"instance" yaml:"instance"`
+		Database         string        `mapstructure:"database" yaml:"database"`
+		Threads          int           `mapstructure:"threads" yaml:"threads"`
+		NumConns         int           `mapstructure:"num_conns" yaml:"num_cons"`
+		MaxExecutionTime time.Duration `mapstructure:"max_execution_time" yaml:"max_execution_time"`
+		Operations       Operations    `mapstructure:"operations" yaml:"operations"`
+		Pool             Pool          `mapstructure:"pool" yaml:"pool"`
+		Tables           []Table       `mapstructure:"tables" yaml:"tables"`
+		clientOnce       sync.Once
+		client           *spanner.Client
+		contextOnce      sync.Once
+		ctx              context.Context
+		context          context.Context
+		contextCancel    context.CancelFunc
 	}
 )
 
