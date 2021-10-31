@@ -14,6 +14,7 @@ import (
 	"github.com/sadasystems/gcsb/pkg/generator/selector"
 	"github.com/sadasystems/gcsb/pkg/schema"
 	"github.com/sadasystems/gcsb/pkg/workload/pool"
+	"google.golang.org/grpc/codes"
 )
 
 var (
@@ -114,6 +115,11 @@ func (j *WorkerPoolRunJob) Execute() {
 		}
 
 		if err != nil {
+			if spanner.ErrCode(err) == codes.Canceled {
+				log.Println("context canceled")
+				break
+			}
+
 			j.mErrs.Inc(1)
 			log.Printf("error performing operation: %s", err.Error())
 		}
