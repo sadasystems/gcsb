@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"cloud.google.com/go/spanner"
+	"github.com/rcrowley/go-metrics"
 	"github.com/sadasystems/gcsb/pkg/config"
 	"github.com/sadasystems/gcsb/pkg/generator"
 	"github.com/sadasystems/gcsb/pkg/generator/operation"
@@ -21,24 +22,26 @@ var (
 
 type (
 	WorkerPool struct { // Implement Workload
-		Context     context.Context
-		Config      *config.Config
-		Schema      schema.Schema
-		initialized bool
-		Pool        *pool.Pool
-		Jobs        []pool.Job
-		wg          sync.WaitGroup
-		client      *spanner.Client
+		Context         context.Context
+		Config          *config.Config
+		Schema          schema.Schema
+		initialized     bool
+		Pool            *pool.Pool
+		Jobs            []pool.Job
+		wg              sync.WaitGroup
+		client          *spanner.Client
+		MetricsRegistry metrics.Registry
 	}
 )
 
 // NewPoolWorkload initializes a "worker pool" type workload
 func NewPoolWorkload(cfg WorkloadConfig) (Workload, error) {
 	w := &WorkerPool{
-		Context: cfg.Context,
-		Config:  cfg.Config,
-		Schema:  cfg.Schema,
-		Jobs:    make([]pool.Job, 0),
+		Context:         cfg.Context,
+		Config:          cfg.Config,
+		Schema:          cfg.Schema,
+		Jobs:            make([]pool.Job, 0),
+		MetricsRegistry: cfg.MetricRegistry,
 		Pool: pool.NewPool(pool.PoolConfig{
 			Workers:        cfg.Config.Threads,
 			BufferInput:    true,
@@ -50,6 +53,10 @@ func NewPoolWorkload(cfg WorkloadConfig) (Workload, error) {
 }
 
 func (w *WorkerPool) Initialize() error {
+	if w.MetricsRegistry == nil {
+		return errors.New("missing metrics registry")
+	}
+
 	var err error
 	w.client, err = w.Config.Client(w.Context)
 	if err != nil {
@@ -102,15 +109,16 @@ func (w *WorkerPool) Load(tableName string) error {
 		}
 
 		j := &WorkerPoolLoadJob{
-			Context:      w.Context,
-			Client:       w.client,
-			TableName:    tableName,
-			RowCount:     opsPerJob,
-			Statement:    stmt,
-			GeneratorMap: genMap,
-			Batch:        true,
-			BatchSize:    500,
-			WaitGroup:    &w.wg,
+			Context:         w.Context,
+			Client:          w.client,
+			TableName:       tableName,
+			RowCount:        opsPerJob,
+			Statement:       stmt,
+			GeneratorMap:    genMap,
+			Batch:           true,
+			BatchSize:       500,
+			WaitGroup:       &w.wg,
+			MetricsRegistry: w.MetricsRegistry,
 		}
 
 		w.Jobs = append(w.Jobs, j)
@@ -186,6 +194,7 @@ func (w *WorkerPool) Run(tableName string) error {
 			Staleness:         w.Config.Operations.Staleness,
 			Operations:        opsPerJob,
 			Table:             table,
+			MetricsRegistry:   w.MetricsRegistry,
 		}
 
 		// Keep a reference to the job for no reason

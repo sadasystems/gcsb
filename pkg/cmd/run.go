@@ -3,6 +3,8 @@ package cmd
 import (
 	"log"
 
+	"github.com/rcrowley/go-metrics"
+
 	"github.com/sadasystems/gcsb/pkg/config"
 	"github.com/sadasystems/gcsb/pkg/schema"
 	"github.com/sadasystems/gcsb/pkg/workload"
@@ -13,7 +15,7 @@ import (
 func init() {
 	runCmd.Flags().StringVarP(&runTable, "table", "t", "", "Table name to load")
 	runCmd.Flags().IntVarP(&runOperations, "operations", "o", 1000, "Number of operations to perform")
-	viper.BindPFlag("operations.total", loadCmd.Flags().Lookup("operations"))
+	viper.BindPFlag("operations.total", runCmd.Flags().Lookup("operations"))
 
 	rootCmd.AddCommand(runCmd)
 }
@@ -47,6 +49,9 @@ var (
 				log.Fatalf("unable to validate configuration %s", err.Error())
 			}
 
+			// Get metric registry
+			registry := metrics.NewRegistry()
+
 			// Generate a context with cancelation
 			log.Println("Creating a context with cancelation")
 			ctx, cancel := cfg.Context() // TODO: this is dumb.. be more creative
@@ -55,10 +60,15 @@ var (
 			log.Println("Listening for OS signals")
 			graceful(cancel)
 
+			// Measure how long schema inference takes to run
+			schemaTimer := metrics.GetOrRegisterTimer("schema.inference", registry)
+
 			// Infer the table schema from the database
 			log.Println("Infering schema from database")
 			var s schema.Schema
-			s, err = schema.LoadSchema(ctx, cfg)
+			schemaTimer.Time(func() {
+				s, err = schema.LoadSchema(ctx, cfg)
+			})
 			if err != nil {
 				log.Fatalf("unable to infer schema: %s", err.Error())
 			}
@@ -72,20 +82,34 @@ var (
 			// Create a workload
 			log.Println("Creating workload")
 			wl, err := constructor(workload.WorkloadConfig{
-				Context: ctx,
-				Config:  cfg,
-				Schema:  s,
+				Context:        ctx,
+				Config:         cfg,
+				Schema:         s,
+				MetricRegistry: registry,
 			})
 			if err != nil {
 				log.Fatalf("unable to create workload: %s", err.Error())
 			}
 
+			// measure the run phase
+			runTimer := metrics.GetOrRegisterTimer("run", registry)
+
 			// Execute the run phase
 			log.Println("Executing run phase")
-			err = wl.Run(runTable)
+			runTimer.Time(func() {
+				err = wl.Run(runTable)
+			})
 			if err != nil {
 				log.Fatalf("unable to execute run operation: %s", err.Error())
 			}
+
+			summarizeMetricsAsciiTable(registry)
+			// l := log.Default()
+			// metrics.WriteOnce(registry, l.Writer())
+
+			// b := &bytes.Buffer{}
+			// metrics.WriteJSONOnce(registry, b)
+			// log.Println(b.String())
 		},
 	}
 )

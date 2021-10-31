@@ -41,9 +41,9 @@ operations:
   # Total number of operations
   total: 5000
   # Read operation weight
-  read: 25
+  read: 50
   # Write operation weight 
-  write: 75
+  write: 50
   # The percentage of rows to sample for generating read operations
   sample_size: 50
   # Perform stale read operations. Default: false (meaning perform strong reads)
