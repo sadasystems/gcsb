@@ -58,7 +58,7 @@ func NewSampleGenerator(src *rand.Rand, samples map[string]interface{}, cols []s
 	return ret, nil
 }
 
-func (s *SampleGenerator) Next() spanner.Key {
+func (s *SampleGenerator) Next() interface{} {
 	ret := spanner.Key{}
 
 	idx := s.src.Intn(s.l)

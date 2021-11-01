@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"time"
 
 	"github.com/rcrowley/go-metrics"
 
@@ -13,17 +14,39 @@ import (
 )
 
 func init() {
-	runCmd.Flags().StringVarP(&runTable, "table", "t", "", "Table name to load")
-	runCmd.Flags().IntVarP(&runOperations, "operations", "o", 1000, "Number of operations to perform")
-	viper.BindPFlag("operations.total", runCmd.Flags().Lookup("operations"))
+	flags := runCmd.Flags()
+	flags.StringVarP(&runTable, "table", "t", "", "Table name to load")
+
+	flags.IntP("operations", "o", 1000, "Number of operations to perform")
+	viper.BindPFlag("operations.total", flags.Lookup("operations"))
+
+	flags.Int("threads", 10, "Number of threads")
+	viper.BindPFlag("threads", flags.Lookup("threads"))
+
+	flags.Int("num-conns", 10, "Number of spanner connections")
+	viper.BindPFlag("num_conns", flags.Lookup("num-conns"))
+
+	flags.IntP("reads", "r", 50, "Read weight")
+	viper.BindPFlag("operations.read", flags.Lookup("reads"))
+
+	flags.IntP("writes", "w", 50, "Write weight")
+	viper.BindPFlag("operations.write", flags.Lookup("writes"))
+
+	flags.Float64P("sample-size", "s", 10, "Percentage of table to sample")
+	viper.BindPFlag("operations.sample_size", flags.Lookup("sample-size"))
+
+	flags.Bool("read-stale", false, "Perform stale reads")
+	viper.BindPFlag("operations.read_stale", flags.Lookup("read-stale"))
+
+	flags.Duration("staleness", time.Duration(15*time.Second), "Exact staleness timestamp bound")
+	viper.BindPFlag("operations.staleness", flags.Lookup("staleness"))
 
 	rootCmd.AddCommand(runCmd)
 }
 
 var (
 	// Flags
-	runTable      string
-	runOperations int
+	runTable string
 
 	// Command
 	runCmd = &cobra.Command{
@@ -104,12 +127,6 @@ var (
 			}
 
 			summarizeMetricsAsciiTable(registry)
-			// l := log.Default()
-			// metrics.WriteOnce(registry, l.Writer())
-
-			// b := &bytes.Buffer{}
-			// metrics.WriteJSONOnce(registry, b)
-			// log.Println(b.String())
 		},
 	}
 )

@@ -133,7 +133,7 @@ func (j *WorkerPoolRunJob) ReadStale() error {
 
 	var rData spanner.Key
 	j.mReadGen.Time(func() {
-		rData = j.ReadGenerator.Next()
+		rData = j.ReadGenerator.Next().(spanner.Key)
 	})
 
 	// var row *spanner.Row
@@ -147,7 +147,7 @@ func (j *WorkerPoolRunJob) ReadStale() error {
 func (j *WorkerPoolRunJob) ReadStrong() error {
 	var rData spanner.Key
 	j.mReadGen.Time(func() {
-		rData = j.ReadGenerator.Next()
+		rData = j.ReadGenerator.Next().(spanner.Key)
 	})
 
 	var err error
