@@ -3,6 +3,7 @@ package cmd
 import (
 	"log"
 
+	"github.com/rcrowley/go-metrics"
 	"github.com/sadasystems/gcsb/pkg/config"
 	"github.com/sadasystems/gcsb/pkg/schema"
 	"github.com/sadasystems/gcsb/pkg/workload"
@@ -47,6 +48,9 @@ var (
 				log.Fatalf("unable to validate configuration %s", err.Error())
 			}
 
+			// Get metric registry
+			registry := metrics.NewRegistry()
+
 			// Generate a context with cancelation
 			log.Println("Creating a context with cancelation")
 			ctx, cancel := cfg.Context() // TODO: this is dumb.. be more creative
@@ -72,9 +76,10 @@ var (
 			// Create a workload
 			log.Println("Creating workload")
 			wl, err := constructor(workload.WorkloadConfig{
-				Context: ctx,
-				Config:  cfg,
-				Schema:  s,
+				Context:        ctx,
+				Config:         cfg,
+				Schema:         s,
+				MetricRegistry: registry,
 			})
 			if err != nil {
 				log.Fatalf("unable to create workload: %s", err.Error())
