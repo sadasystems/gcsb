@@ -58,10 +58,21 @@ github.com/inconshreveable/mousetrap
 github.com/jtolds/gls
 # github.com/magiconair/properties v1.8.5
 github.com/magiconair/properties
+# github.com/mattn/go-runewidth v0.0.13
+## explicit
+github.com/mattn/go-runewidth
 # github.com/mitchellh/mapstructure v1.4.1
 github.com/mitchellh/mapstructure
+# github.com/olekukonko/tablewriter v0.0.5
+## explicit
+github.com/olekukonko/tablewriter
 # github.com/pelletier/go-toml v1.9.3
 github.com/pelletier/go-toml
+# github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
+## explicit
+github.com/rcrowley/go-metrics
+# github.com/rivo/uniseg v0.2.0
+github.com/rivo/uniseg
 # github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d
 github.com/smartystreets/assertions
 github.com/smartystreets/assertions/internal/go-render/render

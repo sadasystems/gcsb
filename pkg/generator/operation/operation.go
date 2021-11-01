@@ -21,6 +21,6 @@ func NewOperationSelector(cfg *config.Config) (selector.Selector, error) {
 	return selector.NewWeightedRandomSelector(
 		rand.New(rand.NewSource(time.Now().UnixNano())),
 		selector.NewWeightedChoice(READ, uint(cfg.Operations.Read)),
-		selector.NewWeightedChoice(WRITE, uint(cfg.Operations.Read)),
+		selector.NewWeightedChoice(WRITE, uint(cfg.Operations.Write)),
 	)
 }

@@ -41,17 +41,22 @@ operations:
   # Total number of operations
   total: 5000
   # Read operation weight
-  read: 25
+  read: 100
   # Write operation weight 
-  write: 75
+  write: 0
   # The percentage of rows to sample for generating read operations
-  sample_size: 50
+  sample_size: 10
   # Perform stale read operations. Default: false (meaning perform strong reads)
   read_stale: false
   # If read_stale is true, use exact staleness time duration for read operations
   # See: https://cloud.google.com/spanner/docs/reads#perform-stale-read
   # Values such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
   staleness: 15s
+  # If a table has a composite primary key [Example: (UserID, FirstName)], we will generate point reads
+  # for both columns making up the key. When this value is 'true', we will only generate values for the 
+  # first column of the key.
+  # # NOT CURRENTLY SUPPORTED
+  partial_keys: true
 
 # If table exists, we will detect the column types of the table and use DEFAULT data generators
 # Here is where you can override those generators

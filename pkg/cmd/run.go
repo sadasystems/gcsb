@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"log"
+	"time"
+
+	"github.com/rcrowley/go-metrics"
 
 	"github.com/sadasystems/gcsb/pkg/config"
 	"github.com/sadasystems/gcsb/pkg/schema"
@@ -11,17 +14,39 @@ import (
 )
 
 func init() {
-	runCmd.Flags().StringVarP(&runTable, "table", "t", "", "Table name to load")
-	runCmd.Flags().IntVarP(&runOperations, "operations", "o", 1000, "Number of operations to perform")
-	viper.BindPFlag("operations.total", loadCmd.Flags().Lookup("operations"))
+	flags := runCmd.Flags()
+	flags.StringVarP(&runTable, "table", "t", "", "Table name to load")
+
+	flags.IntP("operations", "o", 1000, "Number of operations to perform")
+	viper.BindPFlag("operations.total", flags.Lookup("operations"))
+
+	flags.Int("threads", 10, "Number of threads")
+	viper.BindPFlag("threads", flags.Lookup("threads"))
+
+	flags.Int("num-conns", 10, "Number of spanner connections")
+	viper.BindPFlag("num_conns", flags.Lookup("num-conns"))
+
+	flags.IntP("reads", "r", 50, "Read weight")
+	viper.BindPFlag("operations.read", flags.Lookup("reads"))
+
+	flags.IntP("writes", "w", 50, "Write weight")
+	viper.BindPFlag("operations.write", flags.Lookup("writes"))
+
+	flags.Float64P("sample-size", "s", 10, "Percentage of table to sample")
+	viper.BindPFlag("operations.sample_size", flags.Lookup("sample-size"))
+
+	flags.Bool("read-stale", false, "Perform stale reads")
+	viper.BindPFlag("operations.read_stale", flags.Lookup("read-stale"))
+
+	flags.Duration("staleness", time.Duration(15*time.Second), "Exact staleness timestamp bound")
+	viper.BindPFlag("operations.staleness", flags.Lookup("staleness"))
 
 	rootCmd.AddCommand(runCmd)
 }
 
 var (
 	// Flags
-	runTable      string
-	runOperations int
+	runTable string
 
 	// Command
 	runCmd = &cobra.Command{
@@ -47,6 +72,9 @@ var (
 				log.Fatalf("unable to validate configuration %s", err.Error())
 			}
 
+			// Get metric registry
+			registry := metrics.NewRegistry()
+
 			// Generate a context with cancelation
 			log.Println("Creating a context with cancelation")
 			ctx, cancel := cfg.Context() // TODO: this is dumb.. be more creative
@@ -55,10 +83,15 @@ var (
 			log.Println("Listening for OS signals")
 			graceful(cancel)
 
+			// Measure how long schema inference takes to run
+			schemaTimer := metrics.GetOrRegisterTimer("schema.inference", registry)
+
 			// Infer the table schema from the database
 			log.Println("Infering schema from database")
 			var s schema.Schema
-			s, err = schema.LoadSchema(ctx, cfg)
+			schemaTimer.Time(func() {
+				s, err = schema.LoadSchema(ctx, cfg)
+			})
 			if err != nil {
 				log.Fatalf("unable to infer schema: %s", err.Error())
 			}
@@ -72,20 +105,28 @@ var (
 			// Create a workload
 			log.Println("Creating workload")
 			wl, err := constructor(workload.WorkloadConfig{
-				Context: ctx,
-				Config:  cfg,
-				Schema:  s,
+				Context:        ctx,
+				Config:         cfg,
+				Schema:         s,
+				MetricRegistry: registry,
 			})
 			if err != nil {
 				log.Fatalf("unable to create workload: %s", err.Error())
 			}
 
+			// measure the run phase
+			runTimer := metrics.GetOrRegisterTimer("run", registry)
+
 			// Execute the run phase
 			log.Println("Executing run phase")
-			err = wl.Run(runTable)
+			runTimer.Time(func() {
+				err = wl.Run(runTable)
+			})
 			if err != nil {
 				log.Fatalf("unable to execute run operation: %s", err.Error())
 			}
+
+			summarizeMetricsAsciiTable(registry)
 		},
 	}
 )

@@ -1,10 +1,17 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"strings"
+	"time"
+
+	"github.com/olekukonko/tablewriter"
+	"github.com/rcrowley/go-metrics"
 )
 
 // graceful wraps a context cancel func with a listener for OS interrupt signals
@@ -17,4 +24,73 @@ func graceful(cancelFn context.CancelFunc) {
 		log.Printf("System call received. Exiting! (%s)", oscall)
 		cancelFn()
 	}()
+}
+
+func logTable(str *strings.Builder) {
+	scanner := bufio.NewScanner(strings.NewReader(str.String()))
+	for scanner.Scan() {
+		log.Println(scanner.Text())
+	}
+}
+
+func summarizeMetricsAsciiTable(registry metrics.Registry) {
+	// tableString := &strings.Builder{}
+	// t := tablewriter.NewWriter(tableString)
+
+	summarizeTimings(registry)
+}
+
+func summarizeTimings(registry metrics.Registry) {
+	tableString := &strings.Builder{}
+	t := tablewriter.NewWriter(tableString)
+
+	t.SetHeader([]string{
+		"metric",
+		"count",
+		"min",
+		"max",
+		"mean",
+		"stddev",
+		"median",
+		"95%",
+		"99%",
+	})
+
+	mtrcs := []string{
+		"schema.inference",
+		"run",
+		"operations.read.data",
+		"operations.read.time",
+		"operations.write.data",
+		"operations.write.time",
+	}
+
+	for _, mtrc := range mtrcs {
+		mr := registry.Get(mtrc)
+		if mr == nil {
+			log.Println("Encountered missing metric:", mtrc)
+		}
+
+		tmr, ok := mr.(metrics.Timer)
+		if !ok {
+			log.Println("Encountered non-timer metric: ", mtrc)
+		}
+
+		ps := tmr.Percentiles([]float64{0.5, 0.95, 0.99})
+
+		t.Append([]string{
+			mtrc,
+			fmt.Sprintf("%d", tmr.Count()),
+			time.Duration(tmr.Min()).String(),
+			time.Duration(tmr.Max()).String(),
+			time.Duration(tmr.Mean()).String(),
+			time.Duration(tmr.StdDev()).String(),
+			time.Duration(ps[0]).String(),
+			time.Duration(ps[1]).String(),
+			time.Duration(ps[2]).String(),
+		})
+	}
+
+	t.Render()
+	logTable(tableString)
 }

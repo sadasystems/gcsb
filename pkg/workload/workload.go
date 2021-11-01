@@ -8,6 +8,8 @@ import (
 
 	"github.com/sadasystems/gcsb/pkg/config"
 	"github.com/sadasystems/gcsb/pkg/schema"
+
+	"github.com/rcrowley/go-metrics"
 )
 
 type (
@@ -22,9 +24,10 @@ type (
 	}
 
 	WorkloadConfig struct {
-		Context context.Context
-		Config  *config.Config
-		Schema  schema.Schema
+		Context        context.Context
+		Config         *config.Config
+		Schema         schema.Schema
+		MetricRegistry metrics.Registry
 	}
 )
 

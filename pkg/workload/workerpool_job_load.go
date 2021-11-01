@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"cloud.google.com/go/spanner"
+	"github.com/rcrowley/go-metrics"
 	"github.com/sadasystems/gcsb/pkg/generator/data"
 	"github.com/sadasystems/gcsb/pkg/workload/pool"
 )
@@ -18,15 +19,16 @@ var (
 type (
 	// WorkerPoolLoadJob is responsible for inserting data into a table
 	WorkerPoolLoadJob struct {
-		Context      context.Context
-		Client       *spanner.Client
-		TableName    string
-		RowCount     int
-		Statement    string
-		GeneratorMap data.GeneratorMap
-		Batch        bool
-		BatchSize    int
-		WaitGroup    *sync.WaitGroup
+		Context         context.Context
+		Client          *spanner.Client
+		TableName       string
+		RowCount        int
+		Statement       string
+		GeneratorMap    data.GeneratorMap
+		Batch           bool
+		BatchSize       int
+		WaitGroup       *sync.WaitGroup
+		MetricsRegistry metrics.Registry
 	}
 )
 
