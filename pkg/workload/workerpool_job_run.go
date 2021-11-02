@@ -115,8 +115,14 @@ func (j *WorkerPoolRunJob) Execute() {
 		}
 
 		if err != nil {
-			if spanner.ErrCode(err) == codes.Canceled {
+			sErr := spanner.ErrCode(err)
+			if sErr == codes.Canceled {
 				log.Println("context canceled")
+				break
+			}
+
+			if sErr == codes.Unauthenticated {
+				log.Println("Received unrecoverable authentication error. Worker is exiting.")
 				break
 			}
 
