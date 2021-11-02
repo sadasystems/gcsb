@@ -57,10 +57,17 @@ func (j *WorkerPoolLoadJob) InsertMapBatch() {
 		if len(batch) == j.BatchSize {
 			_, err := j.Client.Apply(j.Context, batch)
 			if err != nil {
-				if spanner.ErrCode(err) == codes.Canceled {
+				sErr := spanner.ErrCode(err)
+				if sErr == codes.Canceled {
 					log.Println("context canceled")
 					return
 				}
+
+				if sErr == codes.Unauthenticated {
+					log.Println("Received unrecoverable authentication error. Worker is exiting.")
+					return
+				}
+
 				log.Printf("error in write transaction: %s", err.Error())
 			}
 
@@ -73,10 +80,17 @@ func (j *WorkerPoolLoadJob) InsertMapBatch() {
 	if len(batch) > 0 {
 		_, err := j.Client.Apply(j.Context, batch)
 		if err != nil {
-			if spanner.ErrCode(err) == codes.Canceled {
+			sErr := spanner.ErrCode(err)
+			if sErr == codes.Canceled {
 				log.Println("context canceled")
 				return
 			}
+
+			if sErr == codes.Unauthenticated {
+				log.Println("Received unrecoverable authentication error. Worker is exiting.")
+				return
+			}
+
 			log.Printf("error in write transaction: %s", err.Error())
 		}
 	}
@@ -91,10 +105,17 @@ func (j *WorkerPoolLoadJob) InsertMap() {
 
 		_, err := j.Client.Apply(j.Context, []*spanner.Mutation{spanner.InsertMap(j.TableName, m)})
 		if err != nil {
-			if spanner.ErrCode(err) == codes.Canceled {
+			sErr := spanner.ErrCode(err)
+			if sErr == codes.Canceled {
 				log.Println("context canceled")
 				return
 			}
+
+			if sErr == codes.Unauthenticated {
+				log.Println("Received unrecoverable authentication error. Worker is exiting.")
+				return
+			}
+
 			log.Printf("error in write transaction: %s", err.Error())
 		}
 	}
