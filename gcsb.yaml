@@ -2,10 +2,10 @@
 project:  gcsb-324823
 
 # Spanner Instance ID
-instance: gcsb-test-1
+instance: nearby-test
 
 # Spanner Database Name
-database: gcsb-test-db-11
+database: nearby-test
 
 # Number of threads (goroutines) used to generate load
 threads: 50

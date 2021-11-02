@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gcsb
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      run: warmup
+  template:
+    metadata:
+      labels:
+        run: warmup
+    spec:
+      serviceAccountName: snehashah-warmup
+      containers:
+      - name: warmup
+        image: gcr.io/<project>/warmup:latest
+        resources:
+          requests:
+            cpu: "7.3"
+            memory: 2Gi
+          limits:
+            cpu: "7.3"
+            memory: 2Gi
