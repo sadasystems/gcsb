@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"os"
 
 	"github.com/rcrowley/go-metrics"
 	"github.com/sadasystems/gcsb/pkg/config"
@@ -12,23 +13,31 @@ import (
 )
 
 func init() {
-	loadCmd.Flags().StringVarP(&loadTable, "table", "t", "", "Table name to load")
-	loadCmd.Flags().IntVarP(&loadOperations, "operations", "o", 1000, "Number of records to load")
-	viper.BindPFlag("operations.total", loadCmd.Flags().Lookup("operations"))
+	flags := loadCmd.Flags()
+
+	flags.StringVarP(&loadTable, "table", "t", "", "Table name to load")
+	flags.IntP("operations", "o", 1000, "Number of records to load")
+	flags.Int("threads", 10, "Number of threads")
+	flags.BoolVar(&loadDry, "dry", false, "Dry run. Print config and exit.")
 
 	rootCmd.AddCommand(loadCmd)
 }
 
 var (
 	// Flags
-	loadTable      string
-	loadOperations int
+	loadDry   bool
+	loadTable string
 
 	// Command
 	loadCmd = &cobra.Command{
 		Use:   "load",
 		Short: "Load a table with data",
 		Long:  ``,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			flags := cmd.Flags()
+			viper.BindPFlag("operations.total", flags.Lookup("operations"))
+			viper.BindPFlag("threads", flags.Lookup("threads"))
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if loadTable == "" {
 				log.Fatal("missing table name (-t)")
@@ -46,6 +55,13 @@ var (
 			err = cfg.Validate()
 			if err != nil {
 				log.Fatalf("unable to validate configuration %s", err.Error())
+			}
+
+			// Log the configuration
+			logConfig(cfg)
+			if loadDry {
+				log.Println("Exiting (--dry)")
+				os.Exit(0)
 			}
 
 			// Get metric registry

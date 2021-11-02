@@ -12,6 +12,7 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/rcrowley/go-metrics"
+	"github.com/sadasystems/gcsb/pkg/config"
 )
 
 // graceful wraps a context cancel func with a listener for OS interrupt signals
@@ -93,4 +94,17 @@ func summarizeTimings(registry metrics.Registry) {
 
 	t.Render()
 	logTable(tableString)
+}
+
+func logConfig(cfg *config.Config) {
+	log.Println("Configuration:")
+	log.Printf("\tProject: %s", cfg.Project)
+	log.Printf("\tInstance: %s", cfg.Instance)
+	log.Printf("\tDatabase: %s", cfg.Database)
+	log.Printf("\tThreads: %d", cfg.Threads)
+	log.Printf("\tNumConns: %d", cfg.NumConns)
+	log.Printf("\tOperations:")
+	log.Printf("\t\tTotal: %d", cfg.Operations.Total)
+	log.Printf("\t\tRead: %d", cfg.Operations.Read)
+	log.Printf("\t\tWrite: %d", cfg.Operations.Write)
 }

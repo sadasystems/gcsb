@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"os"
 	"time"
 
 	"github.com/rcrowley/go-metrics"
@@ -18,34 +19,21 @@ func init() {
 	flags.StringVarP(&runTable, "table", "t", "", "Table name to load")
 
 	flags.IntP("operations", "o", 1000, "Number of operations to perform")
-	viper.BindPFlag("operations.total", flags.Lookup("operations"))
-
 	flags.Int("threads", 10, "Number of threads")
-	viper.BindPFlag("threads", flags.Lookup("threads"))
-
 	flags.Int("num-conns", 10, "Number of spanner connections")
-	viper.BindPFlag("num_conns", flags.Lookup("num-conns"))
-
 	flags.IntP("reads", "r", 50, "Read weight")
-	viper.BindPFlag("operations.read", flags.Lookup("reads"))
-
 	flags.IntP("writes", "w", 50, "Write weight")
-	viper.BindPFlag("operations.write", flags.Lookup("writes"))
-
 	flags.Float64P("sample-size", "s", 10, "Percentage of table to sample")
-	viper.BindPFlag("operations.sample_size", flags.Lookup("sample-size"))
-
 	flags.Bool("read-stale", false, "Perform stale reads")
-	viper.BindPFlag("operations.read_stale", flags.Lookup("read-stale"))
-
 	flags.Duration("staleness", time.Duration(15*time.Second), "Exact staleness timestamp bound")
-	viper.BindPFlag("operations.staleness", flags.Lookup("staleness"))
+	flags.BoolVar(&runDry, "dry", false, "Dry run. Print config and exit.")
 
 	rootCmd.AddCommand(runCmd)
 }
 
 var (
 	// Flags
+	runDry   bool
 	runTable string
 
 	// Command
@@ -53,6 +41,18 @@ var (
 		Use:   "run",
 		Short: "Execute a load test",
 		Long:  ``,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			flags := cmd.Flags()
+			viper.BindPFlag("operations.total", flags.Lookup("operations"))
+			viper.BindPFlag("threads", flags.Lookup("threads"))
+			viper.BindPFlag("num_conns", flags.Lookup("num-conns"))
+			viper.BindPFlag("operations.read", flags.Lookup("reads"))
+			viper.BindPFlag("operations.write", flags.Lookup("writes"))
+			viper.BindPFlag("operations.sample_size", flags.Lookup("sample-size"))
+			viper.BindPFlag("operations.read_stale", flags.Lookup("read-stale"))
+			viper.BindPFlag("operations.staleness", flags.Lookup("staleness"))
+
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if runTable == "" {
 				log.Fatal("missing table name (-t)")
@@ -70,6 +70,13 @@ var (
 			err = cfg.Validate()
 			if err != nil {
 				log.Fatalf("unable to validate configuration %s", err.Error())
+			}
+
+			// Log the configuration
+			logConfig(cfg)
+			if runDry {
+				log.Println("Exiting (--dry)")
+				os.Exit(0)
 			}
 
 			// Get metric registry

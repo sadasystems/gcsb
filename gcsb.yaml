@@ -11,6 +11,12 @@ database: nearby-test
 threads: 50
 
 # Number of GCP connections to establish to spanner
+# 
+# This value is the number of TCP connections that are established to the database.
+# This value should not be set artificially high. It's default value is the number of CPU threads 
+# available at runtime. 
+# Please note, the database driver will block until all TCP connections are established. If this 
+# value is very high, that will take quite some time before the load test can proceed. 
 num_conns: 30
 
 # Spanner Connection Pool Settings
