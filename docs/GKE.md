@@ -14,8 +14,9 @@
     - [Create GKE Cluster](#create-gke-cluster)
     - [Import Service Account Key](#import-service-account-key)
     - [Build Docker Container](#build-docker-container)
-  - [Run](#run)
-    - [To perform a parallel load](#to-perform-a-parallel-load)
+  - [Run the tool](#run-the-tool)
+    - [Single instance load operation](#single-instance-load-operation)
+    - [Multi instance load operation](#multi-instance-load-operation)
 
 ## Setup Environment
 
@@ -102,16 +103,18 @@ kubectl create secret generic gcsb-sa-key --from-file=key.json=./key.json
 gcloud builds submit --tag gcr.io/$PROJECT_ID/gcsb .
 ```
 
+## Run the tool
 
-## Run
+To run inside Kubernetes, you will need to mount the ServiceAccount key secret into the container. Additionally, you will need to set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` pointing to this key file. Below, there are instructions for single container launches versus parallel launches.
 
+### Single instance load operation
 
-### To perform a parallel load
+If you want to simply run a single instance of gcsb to perform a load operation, you can launch a POD via the `kubectl run` command.
 
 ```sh
 kubectl run gcsb-load \
   --image=gcr.io/$PROJECT_ID/gcsb \
-  --replicas=8 \
+  --replicas=1 \
   --restart=Never \
   --overrides='{
      "apiVersion": "v1",
@@ -127,4 +130,10 @@ kubectl run gcsb-load \
         "volumes": [ { "name": "google-cloud-key", "secret": { "secretName": "gcsb-sa-key" } } ]
      }
   }'
+```
+
+### Multi instance load operation
+
+```sh
+kubectl apply -f docs/gke_load.yaml
 ```

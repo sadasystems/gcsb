@@ -3,23 +3,36 @@ kind: Deployment
 metadata:
   name: gcsb
 spec:
-  replicas: 3
+  replicas: 4
   selector:
     matchLabels:
-      run: warmup
+      app: gcsb
   template:
     metadata:
       labels:
-        run: warmup
+        app: gcsb-load
     spec:
-      serviceAccountName: snehashah-warmup
+      volumes:
+        - name: google-cloud-key
+          secret:
+            secretName: gcsb-sa-key
       containers:
-      - name: warmup
-        image: gcr.io/<project>/warmup:latest
+      - name: gcsb-load
+        # image: gcr.io/<project>/gcsb:latest
+        image: gcr.io/gcsb-324823/gcsb:latest
+        command: [ "/gcsb" ]
+        # args: [ "load", "--project='$PROJECT_ID'", "--instance='$SPANNER_INSTANCE'", "--database='$SPANNER_DATABASE'", "--table=SingleSingers", "--operations=1000000"]
+        args: [ "load", "--project=gcsb-324823", "--instance=nearby-test", "--database=nearby-test", "--table=SingleSingers", "--operations=1000000", "--threads=50"]
+        volumeMounts:
+          - mountPath: /var/secrets/google
+            name: google-cloud-key
+        env:
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: /var/secrets/google/key.json
         resources:
           requests:
-            cpu: "7.3"
-            memory: 2Gi
+            cpu: "2"
+            memory: 1Gi
           limits:
-            cpu: "7.3"
-            memory: 2Gi
+            cpu: "2"
+            memory: 1Gi
