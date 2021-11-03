@@ -59,7 +59,6 @@ func (j *WorkerPoolLoadJob) InsertMapBatch() {
 			if err != nil {
 				sErr := spanner.ErrCode(err)
 				if sErr == codes.Canceled {
-					log.Println("context canceled")
 					return
 				}
 
@@ -82,7 +81,6 @@ func (j *WorkerPoolLoadJob) InsertMapBatch() {
 		if err != nil {
 			sErr := spanner.ErrCode(err)
 			if sErr == codes.Canceled {
-				log.Println("context canceled")
 				return
 			}
 
@@ -107,7 +105,6 @@ func (j *WorkerPoolLoadJob) InsertMap() {
 		if err != nil {
 			sErr := spanner.ErrCode(err)
 			if sErr == codes.Canceled {
-				log.Println("context canceled")
 				return
 			}
 

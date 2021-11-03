@@ -117,7 +117,6 @@ func (j *WorkerPoolRunJob) Execute() {
 		if err != nil {
 			sErr := spanner.ErrCode(err)
 			if sErr == codes.Canceled {
-				log.Println("context canceled")
 				break
 			}
 
