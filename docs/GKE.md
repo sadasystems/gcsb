@@ -17,6 +17,10 @@
   - [Run the tool](#run-the-tool)
     - [Single instance load operation](#single-instance-load-operation)
     - [Multi instance load operation](#multi-instance-load-operation)
+    - [Single instance run operation](#single-instance-run-operation)
+    - [Multi instance run operation](#multi-instance-run-operation)
+  - [Troubleshooting](#troubleshooting)
+    - [Kubectl errors](#kubectl-errors)
 
 ## Setup Environment
 
@@ -84,10 +88,13 @@ gcloud spanner databases create $SPANNER_DATABASE --instance=$SPANNER_INSTANCE -
 
 ### Create GKE Cluster
 
+Please see `gcloud compute machine-types list` for a list of machine types
+
 ```sh
 gcloud container clusters create $GKE_CLUSTER_NAME \
   --project $PROJECT_ID \
   --region $GCP_REGION \
+  --machine-type=n1-standard-8 \
   --num-nodes 3
 ```
 
@@ -122,8 +129,8 @@ kubectl run gcsb-load \
         "containers": [{
           "name": "gcsb-load",
           "image": "gcr.io/'$PROJECT_ID'/gcsb",
-          "command": [ "/gcsb" ],
-          "args": [ "load", "--project='$PROJECT_ID'", "--instance='$SPANNER_INSTANCE'", "--database='$SPANNER_DATABASE'", "--table=SingleSingers", "--operations=1000000"],
+          "command": [ "/gcsb", "load" ],
+          "args": [ "--project='$PROJECT_ID'", "--instance='$SPANNER_INSTANCE'", "--database='$SPANNER_DATABASE'", "--table=SingleSingers", "--operations=1000000"],
           "volumeMounts": [{"mountPath": "/var/secrets/google", "name": "google-cloud-key"}],
           "env": [{ "name": "GOOGLE_APPLICATION_CREDENTIALS", "value": "/var/secrets/google/key.json" }]
         }],
@@ -134,6 +141,90 @@ kubectl run gcsb-load \
 
 ### Multi instance load operation
 
+To create a load operation named 'gcsb-load', you must edit the [gke_load.yaml](gke_load.yaml) file, supplying your spanner information.
+
+For example, everywhere you se the comment `EDIT:` you must specify your information.
+
+```yaml
+          - --project=YOUR_PROJECT_ID   # EDIT: Your GCP Project ID
+          - --instance=YOUR_INSTANCE_ID # EDIT: Your Spanner Instance ID
+          - --database=YOUR_DATABASE    # EDIT: Your Spanner Database Name
+          - --table=YOUR_TABLE          # EDIT: Your Table Name
+          - --operations=1000000        # EDIT: Number of Operations
+          - --threads=10                # EDIT: Number of Threads
+```
+
+Once you have completed the necessary file edits, run the following.
+
 ```sh
 kubectl apply -f docs/gke_load.yaml
 ```
+
+to stop the test
+
+```sh
+kubectl delete deploy gcsb-load
+```
+
+### Single instance run operation
+
+If you want to simply run a single instance of gcsb to perform a run operation, you can launch a POD via the `kubectl run` command.
+
+```sh
+kubectl run gcsb-load \
+  --image=gcr.io/$PROJECT_ID/gcsb \
+  --replicas=1 \
+  --restart=Never \
+  --overrides='{
+     "apiVersion": "v1",
+     "spec": {
+        "containers": [{
+          "name": "gcsb-load",
+          "image": "gcr.io/'$PROJECT_ID'/gcsb",
+          "command": [ "/gcsb", "run" ],
+          "args": [ "--project='$PROJECT_ID'", "--instance='$SPANNER_INSTANCE'", "--database='$SPANNER_DATABASE'", "--table=SingleSingers", "--operations=1000000"],
+          "volumeMounts": [{"mountPath": "/var/secrets/google", "name": "google-cloud-key"}],
+          "env": [{ "name": "GOOGLE_APPLICATION_CREDENTIALS", "value": "/var/secrets/google/key.json" }]
+        }],
+        "volumes": [ { "name": "google-cloud-key", "secret": { "secretName": "gcsb-sa-key" } } ]
+     }
+  }'
+```
+
+### Multi instance run operation
+
+To create a load operation named 'gcsb-run', you must edit the [gke_run.yaml](gke_run.yaml) file, supplying your spanner information.
+
+For example, everywhere you se the comment `EDIT:` you must specify your information.
+
+```yaml
+          - --project=YOUR_PROJECT_ID   # EDIT: Your GCP Project ID
+          - --instance=YOUR_INSTANCE_ID # EDIT: Your Spanner Instance ID
+          - --database=YOUR_DATABASE    # EDIT: Your Spanner Database Name
+          - --table=YOUR_TABLE          # EDIT: Your Table Name
+          - --operations=1000000        # EDIT: Number of Operations
+          - --threads=10                # EDIT: Number of Threads
+          - --reads=50                  # EDIT: Read Weight (Example: 50 = 50% reads)
+          - --writes=50                 # EDIT: Write Weight (Example: 50 = 50% writes)
+          - --sample-size=5             # EDIT: Percentage of table to sample for generating reads (Example: 5 = 5% of the rows in the table)
+```
+
+Once you have completed the necessary file edits, run the following.
+
+```sh
+kubectl apply -f docs/gke_run.yaml
+```
+
+to stop the test
+
+```sh
+kubectl delete deploy gcsb-run
+```
+
+## Troubleshooting
+
+### Kubectl errors
+
+`SchemaError(io.k8s.api.autoscaling.v2beta2.MetricTarget): invalid object doesn't have additional properties`
+
+There are issues with some kubectl installations from homebrew. Please relink your kubectl installation by following [these instructions](https://stackoverflow.com/a/55564032/145479).
