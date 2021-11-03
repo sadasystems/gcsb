@@ -1,27 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gcsb-load
+  name: gcsb-run
 spec:
   replicas: 1 # EDIT: Number of instances of gcsb
   selector:
     matchLabels:
-      app: gcsb-load
+      app: gcsb-run
   template:
     metadata:
       labels:
-        app: gcsb-load
+        app: gcsb-run
     spec:
       volumes:
         - name: google-cloud-key
           secret:
             secretName: gcsb-sa-key
       containers:
-      - name: gcsb-load
+      - name: gcsb-run
         image: gcr.io/<project>/gcsb:latest # EDIT: Your GCP Project ID
         command: 
           - /gcsb
-          - load # load or run
+          - run # run or run
         args:
           - --project=YOUR_PROJECT_ID   # EDIT: Your GCP Project ID
           - --instance=YOUR_INSTANCE_ID # EDIT: Your Spanner Instance ID
@@ -29,6 +29,9 @@ spec:
           - --table=YOUR_TABLE          # EDIT: Your Table Name
           - --operations=1000000        # EDIT: Number of Operations
           - --threads=10                # EDIT: Number of Threads
+          - --reads=50                  # EDIT: Read Weight (Example: 50 = 50% reads)
+          - --writes=50                 # EDIT: Write Weight (Example: 50 = 50% writes)
+          - --sample-size=5             # EDIT: Percentage of table to sample for generating reads (Example: 5 = 5% of the rows in the table)
         volumeMounts:
           - mountPath: /var/secrets/google
             name: google-cloud-key
