@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	maxString = 2621440  // https://cloud.google.com/spanner/docs/data-definition-language#string
-	maxByte   = 10485760 // https://cloud.google.com/spanner/docs/data-definition-language#bytes
+	maxString = 1024 // Maximum string size
+	maxByte   = 1024 // Maximum bytes size
 )
 
 var lengthRegexp = regexp.MustCompile(`\(([0-9]+|MAX)\)$`)
@@ -46,14 +46,16 @@ func ParseSpannerType(spannerType string) spansql.Type {
 	}
 
 	ret.Base = parseType(dt)
-	if ret.Len == spansql.MaxLen {
-		switch ret.Base {
-		case spansql.String:
+
+	// Clip length for certain types
+	switch ret.Base {
+	case spansql.String:
+		if ret.Len > maxString {
 			ret.Len = maxString
-		case spansql.Bytes:
+		}
+	case spansql.Bytes:
+		if ret.Len > maxByte {
 			ret.Len = maxByte
-		default:
-			ret.Len = 1024 // This should never happen
 		}
 	}
 
