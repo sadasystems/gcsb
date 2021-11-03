@@ -9,6 +9,11 @@ import (
 	"cloud.google.com/go/spanner/spansql"
 )
 
+const (
+	maxString = 1024 // Maximum string size
+	maxByte   = 1024 // Maximum bytes size
+)
+
 var lengthRegexp = regexp.MustCompile(`\(([0-9]+|MAX)\)$`)
 
 // TODO: Return an error rather than panic
@@ -41,6 +46,18 @@ func ParseSpannerType(spannerType string) spansql.Type {
 	}
 
 	ret.Base = parseType(dt)
+
+	// Clip length for certain types
+	switch ret.Base {
+	case spansql.String:
+		if ret.Len > maxString {
+			ret.Len = maxString
+		}
+	case spansql.Bytes:
+		if ret.Len > maxByte {
+			ret.Len = maxByte
+		}
+	}
 
 	return ret
 }
