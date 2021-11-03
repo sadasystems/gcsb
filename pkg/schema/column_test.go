@@ -49,7 +49,7 @@ func TestColumn(t *testing.T) {
 				So(x, ShouldNotBeNil)
 				So(x.Array, ShouldBeFalse)
 				So(x.Base, ShouldEqual, spansql.String)
-				So(x.Len, ShouldEqual, spansql.MaxLen)
+				So(x.Len, ShouldEqual, maxString)
 			})
 
 			Convey("INT64", func() {
