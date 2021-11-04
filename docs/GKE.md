@@ -15,12 +15,19 @@
     - [Import Service Account Key](#import-service-account-key)
     - [Build Docker Container](#build-docker-container)
   - [Run the tool](#run-the-tool)
-    - [Single instance load operation](#single-instance-load-operation)
-    - [Multi instance load operation](#multi-instance-load-operation)
-    - [Single instance run operation](#single-instance-run-operation)
-    - [Multi instance run operation](#multi-instance-run-operation)
+    - [CLI Only](#cli-only)
+      - [Single instance load operation](#single-instance-load-operation)
+      - [Multi instance load operation](#multi-instance-load-operation)
+      - [Single instance run operation](#single-instance-run-operation)
+      - [Multi instance run operation](#multi-instance-run-operation)
+    - [Custom Configuration](#custom-configuration)
+      - [Create Configmap](#create-configmap)
+      - [Multi instance load operation](#multi-instance-load-operation-1)
+      - [Multi instance run operation](#multi-instance-run-operation-1)
   - [Troubleshooting](#troubleshooting)
     - [Kubectl errors](#kubectl-errors)
+
+> **NOTE** The below instructions to  for multi instance load operations deploy as a [kubernetes deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/).  This means that kubernetes will continuously restart your load or run instances until you manually stop them. It is important that you do not leave them running indefinitely.
 
 ## Setup Environment
 
@@ -112,9 +119,11 @@ gcloud builds submit --tag gcr.io/$PROJECT_ID/gcsb .
 
 ## Run the tool
 
+### CLI Only
+
 To run inside Kubernetes, you will need to mount the ServiceAccount key secret into the container. Additionally, you will need to set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` pointing to this key file. Below, there are instructions for single container launches versus parallel launches.
 
-### Single instance load operation
+#### Single instance load operation
 
 If you want to simply run a single instance of gcsb to perform a load operation, you can launch a POD via the `kubectl run` command.
 
@@ -139,7 +148,7 @@ kubectl run gcsb-load \
   }'
 ```
 
-### Multi instance load operation
+#### Multi instance load operation
 
 To create a load operation named 'gcsb-load', you must edit the [gke_load.yaml](gke_load.yaml) file, supplying your spanner information.
 
@@ -166,7 +175,7 @@ to stop the test
 kubectl delete deploy gcsb-load
 ```
 
-### Single instance run operation
+#### Single instance run operation
 
 If you want to simply run a single instance of gcsb to perform a run operation, you can launch a POD via the `kubectl run` command.
 
@@ -191,7 +200,7 @@ kubectl run gcsb-load \
   }'
 ```
 
-### Multi instance run operation
+#### Multi instance run operation
 
 To create a load operation named 'gcsb-run', you must edit the [gke_run.yaml](gke_run.yaml) file, supplying your spanner information.
 
@@ -213,6 +222,62 @@ Once you have completed the necessary file edits, run the following.
 
 ```sh
 kubectl apply -f docs/gke_run.yaml
+```
+
+to stop the test
+
+```sh
+kubectl delete deploy gcsb-run
+```
+
+### Custom Configuration
+
+If you prefer to mount your custom gcsb file into the container, you should follow these instructions
+
+#### Create Configmap
+
+The below example assumes your conig file is named `gcsb.yaml`
+
+```sh
+kubectl create configmap gcsb-config --from-file=gcsb.yaml
+```
+
+#### Multi instance load operation
+
+To create a load operation named 'gcsb-load', you must edit the [gke_load_custom.yaml](gke_load_custom.yaml) file, supplying your spanner information.
+
+For example, everywhere you se the comment `EDIT:` you must specify your information.
+
+```yaml
+          - --table=YOUR_TABLE              # EDIT: Your Table Name
+```
+
+Once you have completed the necessary file edits, run the following.
+
+```sh
+kubectl apply -f docs/gke_load_custom.yaml
+```
+
+to stop the test
+
+```sh
+kubectl delete deploy gcsb-load
+```
+
+#### Multi instance run operation
+
+To create a load operation named 'gcsb-run', you must edit the [gke_run_custom.yaml](gke_run_custom.yaml) file, supplying your spanner information.
+
+For example, everywhere you se the comment `EDIT:` you must specify your information.
+
+```yaml
+          - --table=YOUR_TABLE              # EDIT: Your Table Name
+```
+
+Once you have completed the necessary file edits, run the following.
+
+```sh
+kubectl apply -f docs/gke_run_custom.yaml
 ```
 
 to stop the test
