@@ -64,6 +64,10 @@ var (
 				os.Exit(0)
 			}
 
+			// Since we are in the load command, we don't intend to have a lot of READ sessions.
+			// Overwrite pool.write_sessions to be 1.0
+			cfg.Pool.WriteSessions = 1
+
 			// Get metric registry
 			registry := metrics.NewRegistry()
 
