@@ -97,9 +97,14 @@ For in depth information on the various configuration values, please read the co
 ### Not Supported (yet)
 
 - [ ] Generating read operations utilizing [ReadByIndex](https://cloud.google.com/spanner/docs/samples/spanner-read-data-with-index#spanner_read_data_with_index-go)
-- [ ] Generating NULL values for load operations
-- [ ] JSON column types
-- [ ] STRUCT Objects
+- [ ] Generating NULL values for load operations. If a column is NULLable, gcsb will still generate a value for it.
+- [ ] JSON column types. WIP to support generating json data during LOAD operations. No plan to support point reads using a JSON column.
+- [ ] STRUCT Objects.
+- [ ] VIEWS issue #26 is WIP to support 100% READ tests against views but is not currently functioning
+- [ ] INTERLEAVE tables. Support for INTERLEAVE is currently WIP, and it will only support apex test targets
+- [ ] No SCAN or DELETE operations are supported at this time
+- [ ] Tables with foreign key relationships
+- [ ] Testing multiple tables at once
 
 ## Development
 
