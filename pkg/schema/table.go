@@ -34,6 +34,8 @@ type (
 		PointInsertStatement() (string, error)
 		PointReadStatement(...string) (string, error)
 		TableSample(float64) (string, error)
+
+		IsView() bool
 	}
 
 	table struct {
@@ -102,9 +104,13 @@ func LoadTables(ctx context.Context, client *spanner.Client, s Schema) error {
 func NewTableFromSchema(x information.Table) Table {
 	t := NewTable()
 
-	// TODO: I guess check for nil? This isn't safe
-	t.SetName(*x.TableName)
-	t.SetType(*x.TableType)
+	if x.TableName != nil {
+		t.SetName(*x.TableName)
+	}
+
+	if x.TableType != nil {
+		t.SetType(*x.TableType)
+	}
 
 	if x.SpannerState != nil {
 		t.SetSpanenrState(*x.SpannerState)
@@ -257,4 +263,8 @@ func (t *table) ColumnNames() []string {
 	t.columns.ResetIterator()
 
 	return ret
+}
+
+func (t *table) IsView() bool {
+	return t.t == "VIEW"
 }
