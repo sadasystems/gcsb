@@ -116,7 +116,7 @@ func (w *WorkerPool) Load(tableName string) error {
 			Statement:       stmt,
 			GeneratorMap:    genMap,
 			Batch:           true,
-			BatchSize:       500,
+			BatchSize:       5,
 			WaitGroup:       &w.wg,
 			MetricsRegistry: w.MetricsRegistry,
 		}
