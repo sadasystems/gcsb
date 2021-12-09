@@ -16,8 +16,6 @@ type (
 	Constructor func(WorkloadConfig) (Workload, error)
 
 	Workload interface {
-		// Initialize is called once before any operations can proceed
-		Initialize() error
 		Load(string) error
 		Run(string) error
 		Stop() error
