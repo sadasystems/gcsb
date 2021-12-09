@@ -10,9 +10,6 @@ import (
 var _ Generator = (*JsonGenerator)(nil)
 
 type (
-	// Our JSON type
-	J map[string]interface{}
-
 	JsonGenerator struct {
 		len int
 		gen Generator
