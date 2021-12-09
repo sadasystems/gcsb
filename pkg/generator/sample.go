@@ -44,6 +44,8 @@ func SampleTable(cfg *config.Config, ctx context.Context, client *spanner.Client
 			ret[pkey.Name()] = make([]civil.Date, 0)
 		case spansql.Numeric:
 			ret[pkey.Name()] = make([]*big.Rat, 0)
+		case spansql.JSON:
+			ret[pkey.Name()] = make([]map[string]interface{}, 0) // TODO: This needs to be spanner.NullJSON
 		}
 	}
 
@@ -134,6 +136,15 @@ func SampleTable(cfg *config.Config, ctx context.Context, client *spanner.Client
 				}
 
 				arr := ret[pkey.Name()].([]*big.Rat)
+				ret[pkey.Name()] = append(arr, val)
+			case spansql.JSON:
+				val := make(map[string]interface{}) // TODO: This needs to be spanner.NullJSON
+				err := r.ColumnByName(pkey.Name(), &val)
+				if err != nil {
+					return fmt.Errorf("unable to read row value: %s", err.Error())
+				}
+
+				arr := ret[pkey.Name()].([]map[string]interface{}) // TODO: This needs to be spanner.NullJSON
 				ret[pkey.Name()] = append(arr, val)
 			}
 		}
