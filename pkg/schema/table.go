@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"cloud.google.com/go/spanner"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/sadasystems/gcsb/pkg/schema/information"
 )
 
@@ -102,8 +101,6 @@ func LoadTables(ctx context.Context, client *spanner.Client, s Schema) error {
 
 func NewTableFromSchema(x information.Table) Table {
 	t := NewTable()
-
-	spew.Dump(x)
 
 	// TODO: I guess check for nil? This isn't safe
 	t.SetName(*x.TableName)
