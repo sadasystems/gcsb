@@ -135,6 +135,7 @@ func (j *WorkerPoolRunJob) Execute() {
 
 func (j *WorkerPoolRunJob) ReadStale() error {
 	ro := j.Client.ReadOnlyTransaction().WithTimestampBound(spanner.ExactStaleness(j.Staleness))
+	defer ro.Close()
 
 	var rData spanner.Key
 	j.mReadGen.Time(func() {
@@ -155,9 +156,12 @@ func (j *WorkerPoolRunJob) ReadStrong() error {
 		rData = j.ReadGenerator.Next().(spanner.Key)
 	})
 
+	txn := j.Client.Single()
+	defer txn.Close()
+
 	var err error
 	j.mReadTimer.Time(func() {
-		_, err = j.Client.Single().ReadRow(j.Context, j.TableName, rData, j.cols)
+		_, err = txn.ReadRow(j.Context, j.TableName, rData, j.cols)
 	})
 	return err
 }
