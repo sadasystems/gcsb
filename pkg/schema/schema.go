@@ -14,6 +14,9 @@ type (
 		AddTable(Table)
 		Tables() Tables
 		GetTable(string) Table
+
+		// Traverse should be called after a schema load operation to detect interleaved relationships
+		Traverse() error
 	}
 
 	schema struct {
@@ -63,6 +66,9 @@ func LoadSchema(ctx context.Context, cfg *config.Config) (Schema, error) {
 
 	// reset iterator
 	ts.ResetIterator()
+
+	// Traverse the schema to setup parent/child relationships
+	s.Traverse()
 
 	return s, nil
 }
@@ -116,13 +122,10 @@ func (s *schema) Tables() Tables {
 }
 
 func (s *schema) GetTable(x string) Table {
-	defer s.tables.ResetIterator()
-	for s.tables.HasNext() {
-		t := s.tables.GetNext()
-		if t.Name() == x {
-			return t
-		}
-	}
+	return s.tables.GetTable(x)
+}
 
-	return nil
+// Traverse should be called after a schema load operation to detect interleaved relationships
+func (s *schema) Traverse() error {
+	return s.tables.Traverse()
 }

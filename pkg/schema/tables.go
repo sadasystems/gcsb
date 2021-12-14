@@ -1,5 +1,7 @@
 package schema
 
+import "fmt"
+
 type (
 	TableIterator interface {
 		ResetIterator()
@@ -12,6 +14,8 @@ type (
 		Len() int
 		Tables() []Table
 		AddTable(Table)
+		GetTable(string) Table
+		Traverse() error
 	}
 
 	tables struct {
@@ -54,4 +58,36 @@ func (t *tables) Tables() []Table {
 
 func (t *tables) AddTable(x Table) {
 	t.tables = append(t.tables, x)
+}
+
+func (t *tables) GetTable(x string) Table {
+	for _, tab := range t.tables {
+		if tab.Name() == x {
+			return tab
+		}
+	}
+
+	return nil
+}
+
+func (t *tables) Traverse() error {
+	// Iterate over tables setting parental relationships
+	for _, child := range t.tables {
+		if child.ParentName() != "" {
+			// fetch the parent table
+			parent := t.GetTable(child.ParentName())
+			if parent == nil {
+				return fmt.Errorf("table '%s' references a parent table '%s' that is not in information schema", child.Name(), child.ParentName())
+			}
+
+			// Set parent as this tables parent
+			child.SetParent(parent)
+
+			// Set parents child
+			parent.SetChildName(child.Name())
+			parent.SetChild(child)
+		}
+	}
+
+	return nil
 }
