@@ -48,6 +48,8 @@ type (
 		IsApex() bool
 		// IsBottom will return true if table is the bottom of an interleaved relationship
 		IsBottom() bool
+		// GetApex will return the top level parent or nil if it does not exist
+		GetApex() Table
 	}
 
 	table struct {
@@ -316,4 +318,19 @@ func (t *table) IsApex() bool {
 // IsBottom will return true if the table is the bottom of an interleaved relationship (has no children)
 func (t *table) IsBottom() bool {
 	return t.Child() == nil
+}
+
+func (t *table) GetApex() Table {
+	p := t.Parent()
+	if p == nil {
+		return nil
+	}
+
+	last := p
+	for ok := true; ok; ok = (p != nil) {
+		last = p
+		p = p.Parent()
+	}
+
+	return last
 }

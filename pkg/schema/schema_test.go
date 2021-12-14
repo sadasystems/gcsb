@@ -56,6 +56,11 @@ func TestSchema(t *testing.T) {
 
 			So(t3.IsBottom(), ShouldBeTrue)
 
+			// Get apex
+			apex := t3.GetApex()
+			So(apex, ShouldNotBeNil)
+			So(apex.Name(), ShouldEqual, t1.Name())
+
 			// Missing parent tables should return error
 			// I actually don't even know if this is possible but it's handled
 			t4 := NewTable()
@@ -70,6 +75,9 @@ func TestSchema(t *testing.T) {
 			t5 := NewTable()
 			t5.SetName("table_5")
 			So(t5.IsInterleaved(), ShouldBeFalse)
+
+			// getapex on non-interleaved should be nil
+			So(t5.GetApex(), ShouldBeNil)
 		})
 	})
 }
