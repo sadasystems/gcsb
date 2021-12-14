@@ -15,8 +15,6 @@ import (
 )
 
 type (
-	JobType uint8
-
 	Job struct {
 		JobType           JobType           // Job Type (load or run)
 		Context           context.Context   // Context
@@ -53,9 +51,6 @@ type (
 const (
 	// For batched inserts, how many rows per API call
 	DefaultBatchSize = 100
-
-	JobLoad JobType = 1 + iota
-	JobRun
 )
 
 func (j *Job) Execute() {
