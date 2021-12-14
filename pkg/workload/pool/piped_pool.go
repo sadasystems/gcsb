@@ -29,9 +29,9 @@ type (
 
 // NewPipedPool will return a configured PipedPool. You must call Start() to
 // begin processing jobs
-func NewPipedPool(cfg PipedPoolConfig) PipedPool {
+func NewPipedPool(cfg PipedPoolConfig) *PipedPool {
 
-	wp := PipedPool{
+	wp := &PipedPool{
 		Config:        cfg,
 		End:           make(chan bool),     // channel to spin down workers
 		BinderEnd:     make(chan bool),     // channel to inform binders the pool is exiting
