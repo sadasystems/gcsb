@@ -7,9 +7,9 @@ var _ Validate = (*Table)(nil)
 
 type (
 	Table struct {
-		Name       string      `mapstructure:"name"`
-		Operations *Operations `mapstructure:"operations" yaml:"operations"`
-		Columns    []Column    `mapstructure:"columns"`
+		Name       string           `mapstructure:"name"`
+		Operations *TableOperations `mapstructure:"operations" yaml:"operations"`
+		Columns    []Column         `mapstructure:"columns"`
 	}
 )
 

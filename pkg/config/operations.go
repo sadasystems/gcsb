@@ -19,6 +19,11 @@ type (
 		Staleness   time.Duration `mapstructure:"staleness" yaml:"staleness"`
 		PartialKeys bool          `mapstructure:"partial_keys" yaml:"partial_keys"`
 	}
+
+	TableOperations struct {
+		Read  int `mapstructure:"read"`
+		Write int `mapstructure:"write"`
+	}
 )
 
 func (o *Operations) Validate() error {
