@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+	"time"
 
 	"cloud.google.com/go/spanner"
 	"github.com/rcrowley/go-metrics"
@@ -245,8 +246,15 @@ func (c *CoreWorkload) Execute() error {
 	////
 
 	var abortErr error           // If we abort for some reason, we will assign the reason to this error and return it
+	var timeout <-chan time.Time // The timeout channel. It is never used if max execution time is not set
 	abort := make(chan struct{}) // Used to halt everything on fatal error
 	done := make(chan struct{})  // Signaled when the waitgroup is done (all jobs exit normally)
+
+	// If max execution time is set and is > 0, setup a timer that will fire on the timeout chan
+	if c.Config.MaxExecutionTime > 0 {
+		to := time.NewTimer(c.Config.MaxExecutionTime)
+		timeout = to.C
+	}
 
 	// Create a waitgroup thread. This thread listens to the output of c.pool and decrements
 	// the wait group when the job is complete
@@ -313,13 +321,12 @@ func (c *CoreWorkload) Execute() error {
 	}()
 
 	select {
-	case <-done:
-		return nil // all jobs exited normally
-	case <-abort:
+	case <-done: // all jobs exited normally
+		return nil
+	case <-abort: // a job encountered a fatal error
 		return abortErr
-		// TODO: if config.MaxExecutionTime > 0, then add this case
-		//  case <-time.After(config.MaxExecutionTime):
-		// 		return maxRun
+	case <-timeout: // max execution time reached
+		return errors.New("max execution time reached")
 	}
 }
 
