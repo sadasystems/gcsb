@@ -43,6 +43,9 @@ pool:
 # NOT CURRENTLY SUPPORTED
 max_execution_time: 1h
 
+batch: true
+batch_size: 5
+
 operations: 
   # Total number of operations
   total: 5000
