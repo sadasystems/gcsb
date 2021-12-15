@@ -50,6 +50,7 @@ type (
 		IsBottom() bool
 		// GetApex will return the top level parent or nil if it does not exist
 		GetApex() Table
+		GetAllRelationNames() []string
 	}
 
 	table struct {
@@ -320,7 +321,13 @@ func (t *table) IsBottom() bool {
 	return t.Child() == nil
 }
 
+// GetApex returns
 func (t *table) GetApex() Table {
+	// If this table is the apex return it
+	if t.IsInterleaved() && t.IsApex() {
+		return t
+	}
+
 	p := t.Parent()
 	if p == nil {
 		return nil
@@ -333,4 +340,17 @@ func (t *table) GetApex() Table {
 	}
 
 	return last
+}
+
+func (t *table) GetAllRelationNames() []string {
+	apex := t.GetApex()
+	ret := []string{apex.Name()}
+
+	child := apex.Child()
+	for ok := true; ok; ok = (child != nil) {
+		ret = append(ret, child.Name())
+		child = child.Child()
+	}
+
+	return ret
 }

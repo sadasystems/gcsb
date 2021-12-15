@@ -61,6 +61,16 @@ func TestSchema(t *testing.T) {
 			So(apex, ShouldNotBeNil)
 			So(apex.Name(), ShouldEqual, t1.Name())
 
+			// get apex on apex returns itself
+			So(t1.GetApex().Name(), ShouldEqual, t1.Name())
+
+			// GetAllRelationNames
+			relativeNames := t3.GetAllRelationNames()
+			So(relativeNames, ShouldHaveLength, 3)
+			So(relativeNames, ShouldContain, t1.Name())
+			So(relativeNames, ShouldContain, t2.Name())
+			So(relativeNames, ShouldContain, t3.Name())
+
 			// Missing parent tables should return error
 			// I actually don't even know if this is possible but it's handled
 			t4 := NewTable()
