@@ -60,7 +60,10 @@ func (j *Job) Execute() {
 	case JobLoad: // Load data to table
 		if j.Batched {
 			// Insert $operations in batches
-			_ = j.InsertBatch()
+			err := j.InsertBatch()
+			if err != nil { // If err is returned, it is fatal
+				return
+			}
 		} else {
 			// Insert $operations individually
 			for i := 0; i <= j.Operations; i++ {

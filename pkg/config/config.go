@@ -19,6 +19,10 @@ var (
 	_ Validate = (*Config)(nil)
 )
 
+const (
+	DefaultTableOperations = 5
+)
+
 type (
 	Validate interface {
 		Validate() error

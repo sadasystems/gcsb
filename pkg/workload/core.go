@@ -1,14 +1,19 @@
 package workload
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"os"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
 	"cloud.google.com/go/spanner"
+	"github.com/olekukonko/tablewriter"
 	"github.com/rcrowley/go-metrics"
 	"github.com/sadasystems/gcsb/pkg/config"
 	"github.com/sadasystems/gcsb/pkg/generator"
@@ -198,6 +203,27 @@ func (c *CoreWorkload) Plan(pt JobType, targets []string) error {
 
 		target.WriteGenerator = gm
 
+		////
+		// Try to set an operations count on the target
+		////
+
+		// See if this table is in the config
+		ct := c.Config.Table(target.TableName)
+		if ct == nil {
+			// TODO: there is no configuration for this table
+		} else {
+			// TODO: Table is in the configuration but has no operations config
+			if ct.Operations == nil {
+				if target.Table.IsInterleaved() {
+					if target.Table.IsApex() {
+						target.Operations = c.Config.Operations.Total // if it's the apex table apply total operations
+					} else {
+						target.Operations = config.DefaultTableOperations // A default table operations multiplier for child tables
+					}
+				}
+			}
+		}
+
 		c.plan = append(c.plan, target)
 	}
 
@@ -230,6 +256,10 @@ func (c *CoreWorkload) Run(x string) error {
 	if err != nil {
 		return fmt.Errorf("planning run: %s", err.Error())
 	}
+
+	// Summarize plan
+	c.SummarizePlan()
+	os.Exit(0)
 
 	// Execute our run
 	err = c.Execute()
@@ -298,9 +328,6 @@ func (c *CoreWorkload) Execute() error {
 	// TODO: Launch this in a goroutine?
 	////
 	for _, target := range c.plan {
-		// for i:=0;i<=target.Operations;i++ {
-		// TODO: figure out operations and batching
-
 		// Get a job from the target
 		job := target.NewJob()
 
@@ -360,4 +387,64 @@ func (c *CoreWorkload) GetGeneratorMap(t schema.Table) (data.GeneratorMap, error
 
 func (c *CoreWorkload) GetOperationSelector() (selector.Selector, error) {
 	return operation.NewOperationSelector(c.Config)
+}
+
+// bucketOps will divide operations into buckets and grow each bucket to handle remainders
+func (c *CoreWorkload) bucketOps(n int, k int) []int {
+	r := make([]int, k)
+
+	e := n / k
+	o := n % k
+	for i := 0; i <= k-1; i++ {
+		if o > 0 {
+			r[i] = e + 1
+			o--
+		}
+
+		if o == 0 {
+			r[i] = e
+		}
+	}
+
+	return r
+}
+
+func (c *CoreWorkload) SummarizePlan() {
+	tableString := &strings.Builder{}
+	t := tablewriter.NewWriter(tableString)
+	t.SetHeader([]string{
+		"Table", "Operations", "Read", "Write", "Context",
+	})
+
+	for _, target := range c.plan {
+		l := []string{
+			target.TableName,
+			fmt.Sprintf("%d", target.Operations),
+		}
+
+		if target.JobType == JobRun {
+			l = append(l,
+				fmt.Sprintf("%d", c.Config.Operations.Read),
+				fmt.Sprintf("%d", c.Config.Operations.Write),
+			)
+		} else {
+			l = append(l, "N/A", "N/A")
+		}
+
+		if target.JobType == JobLoad {
+			l = append(l, "LOAD")
+		}
+
+		if target.JobType == JobRun {
+			l = append(l, "RUN")
+		}
+
+		t.Append(l)
+	}
+
+	t.Render()
+	scanner := bufio.NewScanner(strings.NewReader(tableString.String()))
+	for scanner.Scan() {
+		log.Println(scanner.Text())
+	}
 }

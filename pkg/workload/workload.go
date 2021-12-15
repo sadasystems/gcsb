@@ -33,6 +33,7 @@ type (
 func GetWorkloadConstructor(workloadType string) (Constructor, error) {
 	switch workloadType {
 	default:
-		return NewPoolWorkload, nil
+		// return NewPoolWorkload, nil
+		return NewCoreWorkload, nil
 	}
 }
