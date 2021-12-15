@@ -39,6 +39,8 @@ type (
 		DataWriteMeter           metrics.Meter // Used to measure volume of writes
 		DataReadTimer            metrics.Timer // Used to time reads
 		DataReadMeter            metrics.Meter // Used to measure volume of reads
+
+		FatalErr error
 	}
 
 	// A simplified transaction interface to consolidate stale vs strong reads
@@ -62,7 +64,10 @@ func (j *Job) Execute() {
 		} else {
 			// Insert $operations individually
 			for i := 0; i <= j.Operations; i++ {
-				_ = j.InsertOne()
+				err := j.InsertOne()
+				if err != nil { // If err is returned, it is fatal
+					return
+				}
 			}
 		}
 	case JobRun: // Run against table
@@ -72,9 +77,15 @@ func (j *Job) Execute() {
 			op := j.OperationSelector.Select().Item().(operation.Operation)
 			switch op {
 			case operation.READ:
-				_ = j.ReadOne()
+				err := j.ReadOne()
+				if err != nil { // If err is returned, it is fatal
+					return
+				}
 			case operation.WRITE:
-				_ = j.InsertOne()
+				err := j.InsertOne()
+				if err != nil { // if err is returned, it is fatal
+					return
+				}
 			}
 		}
 	default:
@@ -184,11 +195,13 @@ func (j *Job) checkSpannerError(err error) error {
 
 		// If error is codes.Unauthenticated, return. We can not proceed
 		if spannerErr == codes.Unauthenticated {
+			j.FatalErr = err // Set the FatalError so we halt the entire workload
 			return err
 		}
 
 		// If error is codes.Canceled, return. Our context is canceled
 		if spannerErr == codes.Canceled {
+			j.FatalErr = err // Set the FatalError so we halt the entire workload
 			return err
 		}
 

@@ -244,7 +244,7 @@ func (c *CoreWorkload) Execute() error {
 	// Setup transition threads
 	////
 
-	var abortErr error
+	var abortErr error           // If we abort for some reason, we will assign the reason to this error and return it
 	abort := make(chan struct{}) // Used to halt everything on fatal error
 	done := make(chan struct{})  // Signaled when the waitgroup is done (all jobs exit normally)
 
@@ -258,9 +258,18 @@ func (c *CoreWorkload) Execute() error {
 			case <-waitGroupEnd:
 				return
 			// case j := <-waitGroupChan:
-			case <-waitGroupChan:
-				// TODO: type assert j is *Job and check it for errors
-				// if fatal errors happen, set abortErr to something meaningful, close(abort), return
+			case j := <-waitGroupChan:
+				job, ok := j.(*Job)
+				if !ok {
+					panic("received job that was not *Job (BUG)")
+				}
+
+				// If the job has a fatal error, we will abort
+				if job.FatalErr != nil {
+					abortErr = job.FatalErr
+					close(abort)
+					return
+				}
 
 				c.wg.Done() // Must release! Otherwise we will deadlock
 			}
@@ -278,6 +287,7 @@ func (c *CoreWorkload) Execute() error {
 
 	////
 	// Do work. Generate jobs and feed them to the pool
+	// TODO: Launch this in a goroutine?
 	////
 	for _, target := range c.plan {
 		// for i:=0;i<=target.Operations;i++ {
@@ -307,6 +317,7 @@ func (c *CoreWorkload) Execute() error {
 		return nil // all jobs exited normally
 	case <-abort:
 		return abortErr
+		// TODO: if config.MaxExecutionTime > 0, then add this case
 		//  case <-time.After(config.MaxExecutionTime):
 		// 		return maxRun
 	}
