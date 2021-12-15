@@ -13,6 +13,7 @@ func SetDefaults(v *viper.Viper) {
 	v.SetDefault("threads", 10)
 	v.SetDefault("batch", true)
 	v.SetDefault("batch_size", 5)
+	v.SetDefault("max_execution_time", 0)
 
 	// Operations defualts
 	v.SetDefault("operations.total", 10000)
