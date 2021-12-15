@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"sync"
 
 	"cloud.google.com/go/spanner"
@@ -117,10 +118,28 @@ func (c *CoreWorkload) Initialize() error {
 // Plan will create *Targets for each TargetName
 func (c *CoreWorkload) Plan(pt JobType, targets []string) error {
 	// search func for looking if targets contains the given string
-	// contains := func(s []string, searchterm string) bool {
-	// 	i := sort.SearchStrings(s, searchterm)
-	// 	return i < len(s) && s[i] == searchterm
-	// }
+	contains := func(s []string, searchterm string) bool {
+		i := sort.SearchStrings(s, searchterm)
+		return i < len(s) && s[i] == searchterm
+	}
+
+	// Make a pass over targets and add interleaved tables that may not exist
+	for _, t := range targets {
+		st := c.Schema.GetTable(t)
+		if st == nil {
+			return fmt.Errorf("table '%s' missing from information schema", t)
+		}
+
+		// If the table is interleaved, find it's entire lineage and add it to the target list
+		if st.IsInterleaved() {
+			relatives := st.GetAllRelationNames()
+			for _, n := range relatives {
+				if !contains(targets, n) {
+					targets = append(targets, n)
+				}
+			}
+		}
+	}
 
 	// Iterate over targets and create Target
 	for _, t := range targets {
@@ -225,6 +244,10 @@ func (c *CoreWorkload) Execute() error {
 	// Setup transition threads
 	////
 
+	var abortErr error
+	abort := make(chan struct{}) // Used to halt everything on fatal error
+	done := make(chan struct{})  // Signaled when the waitgroup is done (all jobs exit normally)
+
 	// Create a waitgroup thread. This thread listens to the output of c.pool and decrements
 	// the wait group when the job is complete
 	waitGroupChan := make(chan pool.Job, defaultBufferLen)
@@ -237,6 +260,7 @@ func (c *CoreWorkload) Execute() error {
 			// case j := <-waitGroupChan:
 			case <-waitGroupChan:
 				// TODO: type assert j is *Job and check it for errors
+				// if fatal errors happen, set abortErr to something meaningful, close(abort), return
 
 				c.wg.Done() // Must release! Otherwise we will deadlock
 			}
@@ -245,6 +269,12 @@ func (c *CoreWorkload) Execute() error {
 
 	c.pool.BindPool(waitGroupChan)
 	go waitGroupFunc()
+
+	// Cleanup on return
+	defer func() {
+		c.pool.Stop()
+		waitGroupEnd <- true
+	}()
 
 	////
 	// Do work. Generate jobs and feed them to the pool
@@ -263,10 +293,23 @@ func (c *CoreWorkload) Execute() error {
 		c.wg.Add(1)
 	}
 
-	// Wait for all jobs to flow through the pipeline
-	c.wg.Wait()
+	////
+	// Wait for jobs to process
+	////
+	go func() {
+		// Wait for all jobs to flow through the pipeline
+		c.wg.Wait()
+		close(done)
+	}()
 
-	return nil
+	select {
+	case <-done:
+		return nil // all jobs exited normally
+	case <-abort:
+		return abortErr
+		//  case <-time.After(config.MaxExecutionTime):
+		// 		return maxRun
+	}
 }
 
 func (c *CoreWorkload) Stop() error {

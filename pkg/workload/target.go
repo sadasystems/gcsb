@@ -13,25 +13,23 @@ import (
 )
 
 type Target struct {
-	Config      *config.Config
-	Context     context.Context
-	Client      *spanner.Client
-	JobType     JobType      // Determines if we are in a 'run' phase or a 'load' phase
-	Table       schema.Table // Which table this target points at
-	TableName   string       // string name of the table
-	Operations  int          // Total number of operations to execute against this target
-	ColumnNames []string
-
-	OperationSelector selector.Selector       // If JobType == JobRun this is used to determine if it should be a read op or a write op
-	WriteGenerator    data.GeneratorMap       // Map used for generating row data on inserts
-	ReadGenerator     *sample.SampleGenerator // Sample generator for generating point reads
-
-	DataWriteGenerationTimer metrics.Timer // Used to time data generation
-	DataReadGenerationTimer  metrics.Timer // Used to time data geenration
-	DataWriteTimer           metrics.Timer // Used to time writes
-	DataWriteMeter           metrics.Meter // Used to measure volume of writes
-	DataReadTimer            metrics.Timer // Used to time reads
-	DataReadMeter            metrics.Meter // Used to measure volume of reads
+	Config                   *config.Config
+	Context                  context.Context
+	Client                   *spanner.Client
+	JobType                  JobType                 // Determines if we are in a 'run' phase or a 'load' phase
+	Table                    schema.Table            // Which table this target points at
+	TableName                string                  // string name of the table
+	Operations               int                     // Total number of operations to execute against this target
+	ColumnNames              []string                // Col names for reads
+	OperationSelector        selector.Selector       // If JobType == JobRun this is used to determine if it should be a read op or a write op
+	WriteGenerator           data.GeneratorMap       // Map used for generating row data on inserts
+	ReadGenerator            *sample.SampleGenerator // Sample generator for generating point reads
+	DataWriteGenerationTimer metrics.Timer           // Used to time data generation
+	DataReadGenerationTimer  metrics.Timer           // Used to time data geenration
+	DataWriteTimer           metrics.Timer           // Used to time writes
+	DataWriteMeter           metrics.Meter           // Used to measure volume of writes
+	DataReadTimer            metrics.Timer           // Used to time reads
+	DataReadMeter            metrics.Meter           // Used to measure volume of reads
 }
 
 func (t *Target) NewJob() *Job {
@@ -43,6 +41,8 @@ func (t *Target) NewJob() *Job {
 		Columns:                  t.ColumnNames,
 		StaleReads:               t.Config.Operations.ReadStale,
 		Staleness:                t.Config.Operations.Staleness,
+		Batched:                  t.Config.Batch,
+		BatchSize:                t.Config.BatchSize,
 		OperationSelector:        t.OperationSelector,
 		WriteGenerator:           t.WriteGenerator,
 		ReadGenerator:            t.ReadGenerator,
