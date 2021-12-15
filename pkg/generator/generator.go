@@ -199,6 +199,8 @@ func GetDefaultGeneratorForType(t spansql.Type, cfg data.Config) (data.Generator
 		g, err = data.NewDateGenerator(cfg)
 	case spansql.Numeric:
 		g, err = data.NewNumericGenerator(cfg)
+	case spansql.JSON:
+		g, err = data.NewJsonGenerator(cfg)
 	}
 
 	// The column is an array, re-use our generator

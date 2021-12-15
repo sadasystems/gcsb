@@ -81,6 +81,8 @@ func parseType(dt string) spansql.TypeBase {
 		ret = spansql.Date
 	case "NUMERIC":
 		ret = spansql.Numeric
+	case "JSON":
+		ret = spansql.JSON
 	default:
 		panic(fmt.Sprintf("unknown spanner type '%s'", dt)) // TODO: return error. dont panic
 	}

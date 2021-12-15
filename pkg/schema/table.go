@@ -21,6 +21,12 @@ type (
 		ParentName() string
 		SetParent(Table)
 		Parent() Table
+		HasChild() bool
+		SetChildName(string)
+		ChildName() string
+		SetChild(Table)
+		Child() Table
+
 		SetSpanenrState(string)
 		SpannerState() string
 
@@ -34,13 +40,26 @@ type (
 		PointInsertStatement() (string, error)
 		PointReadStatement(...string) (string, error)
 		TableSample(float64) (string, error)
+
+		IsView() bool
+		// IsInterleaved will return true if the table has a parent or child
+		IsInterleaved() bool
+		// IsApex will return true if the table is the apex of an interleaved relationship
+		IsApex() bool
+		// IsBottom will return true if table is the bottom of an interleaved relationship
+		IsBottom() bool
+		// GetApex will return the top level parent or nil if it does not exist
+		GetApex() Table
+		GetAllRelationNames() []string
 	}
 
 	table struct {
 		n            string
 		t            string
-		p            string
+		p            string // parent name
 		parent       Table
+		c            string // child name
+		child        Table
 		spannerState string
 		columns      Columns
 		indexes      Indexes
@@ -102,10 +121,17 @@ func LoadTables(ctx context.Context, client *spanner.Client, s Schema) error {
 func NewTableFromSchema(x information.Table) Table {
 	t := NewTable()
 
-	// TODO: I guess check for nil? This isn't safe
-	t.SetName(*x.TableName)
-	t.SetType(*x.TableType)
-	t.SetSpanenrState(*x.SpannerState)
+	if x.TableName != nil {
+		t.SetName(*x.TableName)
+	}
+
+	if x.TableType != nil {
+		t.SetType(*x.TableType)
+	}
+
+	if x.SpannerState != nil {
+		t.SetSpanenrState(*x.SpannerState)
+	}
 
 	if x.ParentTableName != nil {
 		t.SetParentName(*x.ParentTableName)
@@ -148,6 +174,26 @@ func (t *table) SetParent(x Table) {
 
 func (t *table) Parent() Table {
 	return t.parent
+}
+
+func (t *table) HasChild() bool {
+	return t.c != ""
+}
+
+func (t *table) SetChildName(x string) {
+	t.c = x
+}
+
+func (t *table) ChildName() string {
+	return t.c
+}
+
+func (t *table) SetChild(x Table) {
+	t.child = x
+}
+
+func (t *table) Child() Table {
+	return t.child
 }
 
 func (t *table) SetSpanenrState(x string) {
@@ -252,6 +298,59 @@ func (t *table) ColumnNames() []string {
 	}
 
 	t.columns.ResetIterator()
+
+	return ret
+}
+
+func (t *table) IsView() bool {
+	return t.t == "VIEW"
+}
+
+// IsInterleaved will return true if the table has a parent or child
+func (t *table) IsInterleaved() bool {
+	return t.HasChild() || t.HasParent()
+}
+
+// IsApex will return true if the table is the apex of an interleaved relationship
+func (t *table) IsApex() bool {
+	return t.Parent() == nil
+}
+
+// IsBottom will return true if the table is the bottom of an interleaved relationship (has no children)
+func (t *table) IsBottom() bool {
+	return t.Child() == nil
+}
+
+// GetApex returns
+func (t *table) GetApex() Table {
+	// If this table is the apex return it
+	if t.IsInterleaved() && t.IsApex() {
+		return t
+	}
+
+	p := t.Parent()
+	if p == nil {
+		return nil
+	}
+
+	last := p
+	for ok := true; ok; ok = (p != nil) {
+		last = p
+		p = p.Parent()
+	}
+
+	return last
+}
+
+func (t *table) GetAllRelationNames() []string {
+	apex := t.GetApex()
+	ret := []string{apex.Name()}
+
+	child := apex.Child()
+	for ok := true; ok; ok = (child != nil) {
+		ret = append(ret, child.Name())
+		child = child.Child()
+	}
 
 	return ret
 }

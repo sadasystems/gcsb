@@ -16,9 +16,7 @@ type (
 	Constructor func(WorkloadConfig) (Workload, error)
 
 	Workload interface {
-		// Initialize is called once before any operations can proceed
-		Initialize() error
-		Load(string) error
+		Load([]string) error
 		Run(string) error
 		Stop() error
 	}
@@ -35,6 +33,7 @@ type (
 func GetWorkloadConstructor(workloadType string) (Constructor, error) {
 	switch workloadType {
 	default:
-		return NewPoolWorkload, nil
+		// return NewPoolWorkload, nil
+		return NewCoreWorkload, nil
 	}
 }
