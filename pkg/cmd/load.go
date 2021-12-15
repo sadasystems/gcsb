@@ -80,10 +80,15 @@ var (
 			log.Println("Listening for OS signals")
 			graceful(cancel)
 
+			// Measure how long schema inference takes to run
+			schemaTimer := metrics.GetOrRegisterTimer("schema.inference", registry)
+
 			// Infer the table schema from the database
 			log.Println("Infering schema from database")
 			var s schema.Schema
-			s, err = schema.LoadSchema(ctx, cfg)
+			schemaTimer.Time(func() {
+				s, err = schema.LoadSchema(ctx, cfg)
+			})
 			if err != nil {
 				log.Fatalf("unable to infer schema: %s", err.Error())
 			}
@@ -106,12 +111,19 @@ var (
 				log.Fatalf("unable to create workload: %s", err.Error())
 			}
 
+			// measure the run phase
+			runTimer := metrics.GetOrRegisterTimer("run", registry)
+
 			// Execute the load phase
 			log.Println("Executing load phase")
-			err = wl.Load(loadTables)
+			runTimer.Time(func() {
+				err = wl.Load(loadTables)
+			})
 			if err != nil {
 				log.Fatalf("unable to execute load operation: %s", err.Error())
 			}
+
+			summarizeMetricsAsciiTable(registry)
 		},
 	}
 )

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -320,7 +319,6 @@ func (c *CoreWorkload) Run(x string) error {
 
 	// Summarize plan
 	c.SummarizePlan()
-	os.Exit(0)
 
 	// Execute our run
 	err = c.Execute()
@@ -386,7 +384,6 @@ func (c *CoreWorkload) Execute() error {
 
 	////
 	// Do work. Generate jobs and feed them to the pool
-	// TODO: Launch this in a goroutine?
 	////
 	c.wg.Add(1)
 	go func() {
