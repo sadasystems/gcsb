@@ -54,3 +54,13 @@ func (t *Target) NewJob() *Job {
 		DataReadMeter:            t.DataReadMeter,
 	}
 }
+
+func FindTargetByName(plan []*Target, name string) *Target {
+	for _, t := range plan {
+		if t.TableName == name {
+			return t
+		}
+	}
+
+	return nil
+}

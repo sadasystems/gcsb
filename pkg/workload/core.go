@@ -123,6 +123,9 @@ func (c *CoreWorkload) Initialize() error {
 
 // Plan will create *Targets for each TargetName
 func (c *CoreWorkload) Plan(pt JobType, targets []string) error {
+	var isInterleaved bool
+	apexTables := make([]schema.Table, 0)
+
 	// search func for looking if targets contains the given string
 	contains := func(s []string, searchterm string) bool {
 		i := sort.SearchStrings(s, searchterm)
@@ -140,6 +143,9 @@ func (c *CoreWorkload) Plan(pt JobType, targets []string) error {
 		if st.IsInterleaved() {
 			relatives := st.GetAllRelationNames()
 			for _, n := range relatives {
+				if n == t { // Avoid inserting t twice for some reason... i dont have time to figure out why this is happenign
+					continue
+				}
 				if !contains(targets, n) {
 					targets = append(targets, n)
 				}
@@ -153,6 +159,13 @@ func (c *CoreWorkload) Plan(pt JobType, targets []string) error {
 		st := c.Schema.GetTable(t)
 		if st == nil {
 			return fmt.Errorf("table '%s' missing from information schema", t)
+		}
+
+		if st.IsInterleaved() {
+			isInterleaved = true // Used below
+			if st.IsApex() {
+				apexTables = append(apexTables, st) // Collect a slice of apex tables
+			}
 		}
 
 		// Create target
@@ -210,9 +223,18 @@ func (c *CoreWorkload) Plan(pt JobType, targets []string) error {
 		// See if this table is in the config
 		ct := c.Config.Table(target.TableName)
 		if ct == nil {
-			// TODO: there is no configuration for this table
+			// There is no configuration for this table
+			if target.Table.IsInterleaved() {
+				if target.Table.IsApex() {
+					target.Operations = c.Config.Operations.Total
+				} else {
+					target.Operations = config.DefaultTableOperations
+				}
+			} else {
+				target.Operations = c.Config.Operations.Total
+			}
 		} else {
-			// TODO: Table is in the configuration but has no operations config
+			// Table is in the configuration but has no operations config
 			if ct.Operations == nil {
 				if target.Table.IsInterleaved() {
 					if target.Table.IsApex() {
@@ -220,17 +242,57 @@ func (c *CoreWorkload) Plan(pt JobType, targets []string) error {
 					} else {
 						target.Operations = config.DefaultTableOperations // A default table operations multiplier for child tables
 					}
+				} else {
+					target.Operations = c.Config.Operations.Total
 				}
+			} else {
+				// Table does have a configuration value for operations in config file
+				target.Operations = ct.Operations.Total
 			}
 		}
 
 		c.plan = append(c.plan, target)
 	}
 
+	// So if our phase is load, the operations per target are actually multipliers. Now we go through and do that multiplication
+	if pt == JobLoad && isInterleaved {
+		for _, at := range apexTables {
+			apexTarget := FindTargetByName(c.plan, at.Name())
+
+			lastOps := apexTarget.Operations
+			relatives := at.GetAllRelationNames()
+			for _, cn := range relatives {
+				if cn == at.Name() {
+					continue
+				}
+
+				relativeTarget := FindTargetByName(c.plan, cn)
+				relativeTarget.Operations = lastOps * relativeTarget.Operations
+				lastOps = relativeTarget.Operations
+			}
+		}
+	}
+
 	return nil
 }
 
-func (c *CoreWorkload) Load(string) error {
+func (c *CoreWorkload) Load(x string) error {
+	// Fetch table from schema
+	table := c.Schema.GetTable(x)
+	if table == nil {
+		return fmt.Errorf("table '%s' missing from schema", x)
+	}
+
+	// Plan our run
+	err := c.Plan(JobLoad, []string{x})
+	if err != nil {
+		return fmt.Errorf("planning run: %s", err.Error())
+	}
+
+	// Summarize plan
+	c.SummarizePlan()
+	os.Exit(0)
+
 	return nil
 }
 
@@ -295,7 +357,6 @@ func (c *CoreWorkload) Execute() error {
 			select {
 			case <-waitGroupEnd:
 				return
-			// case j := <-waitGroupChan:
 			case j := <-waitGroupChan:
 				job, ok := j.(*Job)
 				if !ok {
@@ -328,14 +389,23 @@ func (c *CoreWorkload) Execute() error {
 	// TODO: Launch this in a goroutine?
 	////
 	for _, target := range c.plan {
-		// Get a job from the target
-		job := target.NewJob()
+		// Bucketize operations
+		buckets := c.bucketOps(target.Operations, c.Config.Threads)
 
-		// Submit job to pool
-		c.pool.Submit(job)
+		// For each bucket of operations, make a job
+		for _, ops := range buckets {
+			// Get a job from the target
+			job := target.NewJob()
 
-		// Increment waitgorup
-		c.wg.Add(1)
+			// Set operations
+			job.Operations = ops
+
+			// Submit job to pool
+			c.pool.Submit(job)
+
+			// Increment waitgorup
+			c.wg.Add(1)
+		}
 	}
 
 	////

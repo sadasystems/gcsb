@@ -21,8 +21,9 @@ type (
 	}
 
 	TableOperations struct {
-		Read  int `mapstructure:"read"`
-		Write int `mapstructure:"write"`
+		// Read  int `mapstructure:"read"`
+		// Write int `mapstructure:"write"`
+		Total int `mapstructure:"total"`
 	}
 )
 
