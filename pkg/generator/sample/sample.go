@@ -52,7 +52,9 @@ func NewSampleGenerator(src *rand.Rand, samples map[string]interface{}, cols []s
 	}
 
 	if ret.l == 0 {
-		return nil, fmt.Errorf("can not calculate maximum sample index. this is a bug")
+		// spew.Dump(ret)
+		// return nil, fmt.Errorf("can not calculate maximum sample index. this is a bug")
+		return nil, fmt.Errorf("can not use zero length table samples to generate reads (is there data loaded?)")
 	}
 
 	return ret, nil
