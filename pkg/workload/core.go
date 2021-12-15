@@ -131,22 +131,25 @@ func (c *CoreWorkload) Plan(pt JobType, targets []string) error {
 		return i < len(s) && s[i] == searchterm
 	}
 
-	// Make a pass over targets and add interleaved tables that may not exist
-	for _, t := range targets {
-		st := c.Schema.GetTable(t)
-		if st == nil {
-			return fmt.Errorf("table '%s' missing from information schema", t)
-		}
+	// We can only run against one table at a time, so only expand interleaved tables if we are loading
+	if pt == JobLoad {
+		// Make a pass over targets and add interleaved tables that may not exist
+		for _, t := range targets {
+			st := c.Schema.GetTable(t)
+			if st == nil {
+				return fmt.Errorf("table '%s' missing from information schema", t)
+			}
 
-		// If the table is interleaved, find it's entire lineage and add it to the target list
-		if st.IsInterleaved() {
-			relatives := st.GetAllRelationNames()
-			for _, n := range relatives {
-				if n == t { // Avoid inserting t twice for some reason... i dont have time to figure out why this is happenign
-					continue
-				}
-				if !contains(targets, n) {
-					targets = append(targets, n)
+			// If the table is interleaved, find it's entire lineage and add it to the target list
+			if st.IsInterleaved() {
+				relatives := st.GetAllRelationNames()
+				for _, n := range relatives {
+					if n == t { // Avoid inserting t twice for some reason... i dont have time to figure out why this is happenign
+						continue
+					}
+					if !contains(targets, n) {
+						targets = append(targets, n)
+					}
 				}
 			}
 		}
