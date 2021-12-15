@@ -15,7 +15,8 @@ import (
 func init() {
 	flags := loadCmd.Flags()
 
-	flags.StringVarP(&loadTable, "table", "t", "", "Table name to load")
+	// flags.StringVarP(&loadTable, "table", "t", "", "Table name to load")
+	flags.StringSliceVarP(&loadTables, "table", "t", []string{}, "Table name to load")
 	flags.IntP("operations", "o", 1000, "Number of records to load")
 	flags.Int("threads", 10, "Number of threads")
 	flags.BoolVar(&loadDry, "dry", false, "Dry run. Print config and exit.")
@@ -25,8 +26,8 @@ func init() {
 
 var (
 	// Flags
-	loadDry   bool
-	loadTable string
+	loadDry    bool
+	loadTables []string
 
 	// Command
 	loadCmd = &cobra.Command{
@@ -39,7 +40,7 @@ var (
 			viper.BindPFlag("threads", flags.Lookup("threads"))
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if loadTable == "" {
+			if len(loadTables) <= 0 {
 				log.Fatal("missing table name (-t)")
 			}
 
@@ -107,7 +108,7 @@ var (
 
 			// Execute the load phase
 			log.Println("Executing load phase")
-			err = wl.Load(loadTable)
+			err = wl.Load(loadTables)
 			if err != nil {
 				log.Fatalf("unable to execute load operation: %s", err.Error())
 			}

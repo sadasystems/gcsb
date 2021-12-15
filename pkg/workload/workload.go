@@ -16,7 +16,7 @@ type (
 	Constructor func(WorkloadConfig) (Workload, error)
 
 	Workload interface {
-		Load(string) error
+		Load([]string) error
 		Run(string) error
 		Stop() error
 	}

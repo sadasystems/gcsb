@@ -276,22 +276,21 @@ func (c *CoreWorkload) Plan(pt JobType, targets []string) error {
 	return nil
 }
 
-func (c *CoreWorkload) Load(x string) error {
-	// Fetch table from schema
-	table := c.Schema.GetTable(x)
-	if table == nil {
-		return fmt.Errorf("table '%s' missing from schema", x)
-	}
-
+func (c *CoreWorkload) Load(x []string) error {
 	// Plan our run
-	err := c.Plan(JobLoad, []string{x})
+	err := c.Plan(JobLoad, x)
 	if err != nil {
 		return fmt.Errorf("planning run: %s", err.Error())
 	}
 
 	// Summarize plan
 	c.SummarizePlan()
-	os.Exit(0)
+
+	// Execute our run
+	err = c.Execute()
+	if err != nil {
+		return fmt.Errorf("executing run: %s", err.Error())
+	}
 
 	return nil
 }
@@ -366,6 +365,7 @@ func (c *CoreWorkload) Execute() error {
 				// If the job has a fatal error, we will abort
 				if job.FatalErr != nil {
 					abortErr = job.FatalErr
+					abort <- struct{}{}
 					close(abort)
 					return
 				}
@@ -379,34 +379,39 @@ func (c *CoreWorkload) Execute() error {
 	go waitGroupFunc()
 
 	// Cleanup on return
-	defer func() {
-		c.pool.Stop()
-		waitGroupEnd <- true
-	}()
+	// defer func() {
+	// 	c.pool.Stop()
+	// 	waitGroupEnd <- true
+	// }()
 
 	////
 	// Do work. Generate jobs and feed them to the pool
 	// TODO: Launch this in a goroutine?
 	////
-	for _, target := range c.plan {
-		// Bucketize operations
-		buckets := c.bucketOps(target.Operations, c.Config.Threads)
+	c.wg.Add(1)
+	go func() {
+		defer c.wg.Done()
 
-		// For each bucket of operations, make a job
-		for _, ops := range buckets {
-			// Get a job from the target
-			job := target.NewJob()
+		for _, target := range c.plan {
+			// Bucketize operations
+			buckets := c.bucketOps(target.Operations, c.Config.Threads)
 
-			// Set operations
-			job.Operations = ops
+			// For each bucket of operations, make a job
+			for _, ops := range buckets {
+				// Get a job from the target
+				job := target.NewJob()
 
-			// Submit job to pool
-			c.pool.Submit(job)
+				// Set operations
+				job.Operations = ops
 
-			// Increment waitgorup
-			c.wg.Add(1)
+				// Submit job to pool
+				c.pool.Submit(job)
+
+				// Increment waitgorup
+				c.wg.Add(1)
+			}
 		}
-	}
+	}()
 
 	////
 	// Wait for jobs to process
@@ -414,6 +419,7 @@ func (c *CoreWorkload) Execute() error {
 	go func() {
 		// Wait for all jobs to flow through the pipeline
 		c.wg.Wait()
+		done <- struct{}{}
 		close(done)
 	}()
 

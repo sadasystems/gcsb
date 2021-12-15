@@ -6,6 +6,7 @@ import (
 	"cloud.google.com/go/spanner"
 	"github.com/rcrowley/go-metrics"
 	"github.com/sadasystems/gcsb/pkg/config"
+	"github.com/sadasystems/gcsb/pkg/generator"
 	"github.com/sadasystems/gcsb/pkg/generator/data"
 	"github.com/sadasystems/gcsb/pkg/generator/sample"
 	"github.com/sadasystems/gcsb/pkg/generator/selector"
@@ -33,7 +34,7 @@ type Target struct {
 }
 
 func (t *Target) NewJob() *Job {
-	return &Job{
+	j := &Job{
 		JobType:                  t.JobType,
 		Context:                  t.Context,
 		Client:                   t.Client,
@@ -53,6 +54,25 @@ func (t *Target) NewJob() *Job {
 		DataReadTimer:            t.DataReadTimer,
 		DataReadMeter:            t.DataReadMeter,
 	}
+
+	t.CreateMaps(j)
+
+	return j
+}
+
+func (t *Target) CreateMaps(j *Job) {
+	// Create a generator map for the table
+	gm, err := t.GetGeneratorMap()
+	if err != nil {
+		return
+	}
+
+	j.WriteGenerator = gm
+}
+
+// GetGeneratorMap will return a generator map suitable for creating insert operations against a table
+func (t *Target) GetGeneratorMap() (data.GeneratorMap, error) {
+	return generator.GetDataGeneratorMapForTable(*t.Config, t.Table)
 }
 
 func FindTargetByName(plan []*Target, name string) *Target {

@@ -79,7 +79,13 @@ func (w *WorkerPool) Stop() error {
 	return nil
 }
 
-func (w *WorkerPool) Load(tableName string) error {
+func (w *WorkerPool) Load(tables []string) error {
+	if len(tables) <= 0 {
+		return fmt.Errorf("need 1 table")
+	}
+
+	tableName := tables[0]
+
 	if !w.initialized {
 		err := w.Initialize()
 		if err != nil {
