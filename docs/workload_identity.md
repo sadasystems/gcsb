@@ -36,6 +36,7 @@ export SPANNER_INSTANCE=test-instance
 export SPANNER_DATABASE=test-database
 export GKE_CLUSTER_NAME=test-cluster
 export GCP_REGION=us-west2
+export GSA_NAME=gcsb-test-sa
 ```
 
 ### Create a GCP Project
@@ -56,7 +57,7 @@ gcloud services enable artifactregistry.googleapis.com --project $PROJECT_ID
 ### Create a service account
 
 ```sh
-gcloud iam service-accounts create gcsb-test-sa \
+gcloud iam service-accounts create $GSA_NAME \
     --description="GCSB Test Account" \
     --display-name="gcsb" \
     --project $PROJECT_ID
@@ -66,7 +67,7 @@ gcloud iam service-accounts create gcsb-test-sa \
 
 ```sh
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:gcsb-test-sa@${PROJECT_ID}.iam.gserviceaccount.com" \
+    --member="serviceAccount:$GSA_NAME@${PROJECT_ID}.iam.gserviceaccount.com" \
     --role="roles/spanner.databaseUser"
 ```
 
@@ -115,7 +116,7 @@ kubectl create serviceaccount gcsb \
 ### Allow kubernetes service account to impersonate google service account
 
 ```sh
-gcloud iam service-accounts add-iam-policy-binding GSA_NAME@$PROJECT_ID.iam.gserviceaccount.com \
+gcloud iam service-accounts add-iam-policy-binding $GSA_NAME@$PROJECT_ID.iam.gserviceaccount.com \
     --role roles/iam.workloadIdentityUser \
     --member "serviceAccount:$PROJECT_ID.svc.id.goog[gcsb/gcsb]"
 ```
@@ -125,7 +126,7 @@ gcloud iam service-accounts add-iam-policy-binding GSA_NAME@$PROJECT_ID.iam.gser
 ```sh
 kubectl annotate serviceaccount gcsb \
     --namespace gcsb \
-    iam.gke.io/gcp-service-account=gcsb@$PROJECT_ID.iam.gserviceaccount.com
+    iam.gke.io/gcp-service-account=$GSA_NAME@$PROJECT_ID.iam.gserviceaccount.com
 ```
 
 ### Build Docker Container
