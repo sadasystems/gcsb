@@ -39,9 +39,12 @@ pool:
   track_session_handles: false
 
 # Maximum execution time. If set, we will run until we hit operation count, or this time limit. Whichever comes first.
-# Values such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
-# NOT CURRENTLY SUPPORTED
-max_execution_time: 1h
+# When set to 0, run indefinitely. Example: "1h" = 1 hour
+# # Values such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+max_execution_time: 0
+
+batch: true
+batch_size: 5
 
 operations: 
   # Total number of operations

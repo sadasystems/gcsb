@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gcsb-load
+  namespace: gcsb
+spec:
+  replicas: 1 # EDIT: Number of instances of gcsb
+  selector:
+    matchLabels:
+      app: gcsb-load
+  template:
+    metadata:
+      labels:
+        app: gcsb-load
+    spec:
+      serviceAccountName: gcsb
+      containers:
+      - name: gcsb-load
+        image: gcr.io/<project>/gcsb:latest # EDIT: Your GCP Project ID
+        command: 
+          - /gcsb
+          - load # load or run
+        args:
+          - --project=YOUR_PROJECT_ID   # EDIT: Your GCP Project ID
+          - --instance=YOUR_INSTANCE_ID # EDIT: Your Spanner Instance ID
+          - --database=YOUR_DATABASE    # EDIT: Your Spanner Database Name
+          - --table=YOUR_TABLE          # EDIT: Your Table Name
+          - --operations=1000000        # EDIT: Number of Operations
+          - --threads=10                # EDIT: Number of Threads
+        resources:
+          requests:
+            cpu: "6"
+            memory: 4Gi
+          limits:
+            cpu: "6"
+            memory: 4Gi

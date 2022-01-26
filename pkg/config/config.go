@@ -19,6 +19,10 @@ var (
 	_ Validate = (*Config)(nil)
 )
 
+const (
+	DefaultTableOperations = 5
+)
+
 type (
 	Validate interface {
 		Validate() error
@@ -34,6 +38,8 @@ type (
 		Operations       Operations    `mapstructure:"operations" yaml:"operations"`
 		Pool             Pool          `mapstructure:"pool" yaml:"pool"`
 		Tables           []Table       `mapstructure:"tables" yaml:"tables"`
+		Batch            bool          `mapstructure:"batch"`
+		BatchSize        int           `mapstructure:"batch_size"`
 		clientOnce       sync.Once
 		client           *spanner.Client
 		contextOnce      sync.Once
