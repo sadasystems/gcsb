@@ -38,23 +38,50 @@ type (
 		// The current state of the column. A new stored generated column added to an existing table may go through multiple user-observable states before it is fully usable. Possible values are:
 		//   WRITE_ONLY: The column is being backfilled. No read is allowed.
 		// 	 COMMITTED: The column is fully usable.
-		SpannerState *string `spanner:"SPANNER_STATE"`
-		IsPrimaryKey bool    `spanner:"IS_PRIMARY_KEY"`
+		SpannerState         *string `spanner:"SPANNER_STATE"`
+		IsPrimaryKey         bool    `spanner:"IS_PRIMARY_KEY"`
+		AllowCommitTimestamp bool    `spanner:"ALLOW_COMMIT_TIMESTAMP"`
 	}
 )
 
-const getColSqlStr = `SELECT ` +
-	`c.COLUMN_NAME, c.ORDINAL_POSITION, c.IS_NULLABLE, c.SPANNER_TYPE, c.SPANNER_STATE, ` +
-	`EXISTS (` +
-	`  SELECT 1 FROM INFORMATION_SCHEMA.INDEX_COLUMNS ic ` +
-	`  WHERE ic.TABLE_SCHEMA = "" and ic.TABLE_NAME = c.TABLE_NAME ` +
-	`  AND ic.COLUMN_NAME = c.COLUMN_NAME` +
-	`  AND ic.INDEX_NAME = "PRIMARY_KEY" ` +
-	`) IS_PRIMARY_KEY, ` +
-	`IS_GENERATED = "ALWAYS" AS IS_GENERATED ` +
-	`FROM INFORMATION_SCHEMA.COLUMNS c ` +
-	`WHERE c.TABLE_SCHEMA = "" AND c.TABLE_NAME = @table_name ` +
-	`ORDER BY c.ORDINAL_POSITION`
+const getColSqlStr = `
+SELECT
+  c.COLUMN_NAME,
+  c.ORDINAL_POSITION,
+  c.IS_NULLABLE,
+  c.SPANNER_TYPE,
+  c.SPANNER_STATE,
+  EXISTS (
+  SELECT
+    1
+  FROM
+    INFORMATION_SCHEMA.INDEX_COLUMNS ic
+  WHERE
+    ic.TABLE_SCHEMA = ""
+    AND ic.TABLE_NAME = c.TABLE_NAME
+    AND ic.COLUMN_NAME = c.COLUMN_NAME
+    AND ic.INDEX_NAME = "PRIMARY_KEY" ) IS_PRIMARY_KEY,
+  IS_GENERATED = "ALWAYS" AS IS_GENERATED,
+  EXISTS (
+    SELECT
+        1
+    FROM
+         INFORMATION_SCHEMA.COLUMN_OPTIONS co
+    WHERE
+        co.TABLE_SCHEMA = ""
+        AND co.TABLE_NAME = c.TABLE_NAME
+        AND co.COLUMN_NAME = c.COLUMN_NAME
+        AND co.OPTION_NAME = "allow_commit_timestamp"
+        AND co.OPTION_VALUE = "TRUE"
+  ) ALLOW_COMMIT_TIMESTAMP
+FROM
+  INFORMATION_SCHEMA.COLUMNS c
+WHERE
+  c.TABLE_SCHEMA = ""
+  AND c.TABLE_NAME = @table_name
+ORDER BY
+  c.ORDINAL_POSITION
+`
 
 var (
 	// getColumnsForTableQuery renders a query for fetching all columns for a table from information_schema.columns

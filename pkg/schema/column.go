@@ -28,6 +28,8 @@ type (
 		SpannerState() string
 		SetPrimaryKey(bool)
 		PrimaryKey() bool
+		SetAllowCommitTimestamp(bool)
+		AllowCommitTimestamp() bool
 		Type() spansql.Type
 	}
 
@@ -41,6 +43,7 @@ type (
 		isStored             string
 		spannerState         string
 		primaryKey           bool
+		allowCommitTimestamp bool
 	}
 )
 
@@ -163,6 +166,14 @@ func (c *column) SetPrimaryKey(x bool) {
 
 func (c *column) PrimaryKey() bool {
 	return c.primaryKey
+}
+
+func (c *column) SetAllowCommitTimestamp(x bool) {
+	c.allowCommitTimestamp = x
+}
+
+func (c *column) AllowCommitTimestamp() bool {
+	return c.allowCommitTimestamp
 }
 
 // Parse the sql type and wrap it with spansql.Type. Parts of this function borrowed from Yo
