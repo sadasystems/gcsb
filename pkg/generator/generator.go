@@ -68,6 +68,12 @@ func GetDataGeneratorMapForTable(cfg config.Config, t schema.Table) (data.Genera
 			}
 		}
 
+		// If the column has the allow_commit_timestamp option, ignore the timestamp generator and use
+		// Commmit timestamp generator
+		if col.AllowCommitTimestamp() {
+			g, gErr = data.NewCommitTimestampGenerator(nil)
+		}
+
 		if gErr != nil {
 			return nil, fmt.Errorf("building generator map: %s", gErr.Error())
 		}
