@@ -70,6 +70,8 @@ func NewColumnFromSchema(x information.Column) Column {
 	c.SetSpannerState(*x.SpannerState)
 	c.SetPrimaryKey(x.IsPrimaryKey)
 
+	c.SetAllowCommitTimestamp(x.AllowCommitTimestamp)
+
 	return c
 }
 
