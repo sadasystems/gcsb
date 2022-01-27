@@ -8,8 +8,13 @@
   - [Operations](#operations)
     - [Load](#load)
       - [Single table load](#single-table-load)
+      - [Mulitiple table load](#mulitiple-table-load)
+      - [Loading into interleaved tables](#loading-into-interleaved-tables)
     - [Run](#run)
       - [Single table run](#single-table-run)
+      - [Mulitiple table run](#mulitiple-table-run)
+      - [Running against interleaved tables](#running-against-interleaved-tables)
+  - [Distributed testing](#distributed-testing)
   - [Configuration](#configuration)
   - [Roadmap](#roadmap)
     - [Not Supported (yet)](#not-supported-yet)
@@ -72,6 +77,62 @@ gcsb load -t TABLE_NAME -o NUM_ROWS
 
 Additionally, please see `gcsb load --help` for additional configuration options.
 
+#### Mulitiple table load
+
+Similar to the above [Single table load](#single-table-load), you may specify multiple tables by repeating the `-t TABLE_NAME` argument. By default, the number of operations is applied to each table. For example, specifying 2 tables with 1000 operations, will yield 2000 total operations. 1000 per table.
+
+```sh
+gcsb load -t TABLE1 -t TABLE2 -o NUM_ROWS
+```
+
+Operations per table can be configured in the yaml configuration. For example
+
+```yaml
+tables:
+  - name: TABLE1
+    operations:
+      total: 500
+  - name: TABLE2
+    operations:
+      total: 500
+```
+
+#### Loading into interleaved tables
+
+Loading data into interleaved tables is supported but has some behavioral side effects that should be known. When loading data into an interleaved table, GCSB will detect all tables in the hierarchy and begin loading data at the familial apex. The configured number of operations applies to this apex table. By default, the number of tables for each child table is multiplied by 5. For example:
+
+Using our [test INTERLEAVE schema](schemas/multi_table.sql), we see an INTERLEAVE relationship between the `Singers`, `Albums`, and `Songs` tables.
+
+If we execute a load operation against these tables with total operations set to `10` we will see the following occur
+
+```sh
+gcsb load -t Songs -o 10
+
++---------+------------+------+-------+---------+
+|  TABLE  | OPERATIONS | READ | WRITE | CONTEXT |
++---------+------------+------+-------+---------+
+| Singers |         10 | N/A  | N/A   | LOAD    |
+| Albums  |         50 | N/A  | N/A   | LOAD    |
+| Songs   |        250 | N/A  | N/A   | LOAD    |
++---------+------------+------+-------+---------+
+```
+
+In this case, for each child table we take the number of operations for the parent and multiply it by the default value of `5`.
+
+To change this multiplier, we use the yaml configuration file for the table we want. The `operations.total` value becomes a multiplier. 
+
+```yaml
+tables:
+  - name: Albums
+    operations:
+      total: 10
+  - name: Songs
+    operations:
+      total: 20
+```
+
+At present, GCSB will sort it's operations from the apex down. Meaning it will populate the `Singers` table first and then it's child, and then the next child. Multiple table operations are not mixed within the same transaction. 
+
 ### Run
 
 #### Single table run
@@ -83,6 +144,47 @@ gcsb run -p YOUR_GCP_PROJECT_ID -i YOUR_INSTANCE_ID -d YOUR_DATABASE_ID -t Singl
 ```
 
 Additionally, please see `gcsb run --help` for additional configuration options.
+
+#### Mulitiple table run
+
+Similar to the above [Single table run](#single-table-run), you may specify multiple tables by repeating the `-t TABLE_NAME` argument. By default, the number of operations is applied to each table. For example, specifying 2 tables with 1000 operations, will yield 2000 total operations. 1000 per table.
+
+```sh
+gcsb run -t TABLE1 -t TABLE2 -o NUM_ROWS
+```
+
+Operations per table can be configured in the yaml configuration. For example
+
+```yaml
+tables:
+  - name: TABLE1
+    operations:
+      total: 500
+  - name: TABLE2
+    operations:
+      total: 500
+```
+
+#### Running against interleaved tables
+
+Run operations against interleaved tables are only supported on the APEX table.
+
+Using our [test INTERLEAVE schema](schemas/multi_table.sql), we see an INTERLEAVE relationship between the `Singers`, `Albums`, and `Songs` tables.
+
+You will notice that if we try to run against any child table an error will occur.
+
+```sh
+gcsb run -t Songs -o 10
+
+unable to execute run operation: can only execute run against apex table (try 'Singers')
+```
+
+## Distributed testing
+
+GCSB is intended to run in a stateless mannger. This design choice was to allow massive horizontal scaling of gcsb to stress your database to it's absolute limits. During development we've identified kubernetes as the prefered tool for the job. We've provided two separate tutorials for running gcsb inside of kubernetes
+
+- [GKE](docs/GKE.md) - For running GCSB inside GKE using a service account key. This can be used for non-GKE clusters as well as it contains instructions for mounting a service account key into the container.
+- [GKE with Workload Identity](docs/workload_identity.md) - For running GCSB inside a GKE cluster that has workload identity turned on. This is most useful in organizations that have security policies preventing you from generating or downloading a service account key.
 
 ## Configuration
 
@@ -101,10 +203,13 @@ For in depth information on the various configuration values, please read the co
 - [x] ~~JSON column types~~
 - [ ] STRUCT Objects.
 - [ ] VIEWS issue #26 is WIP to support 100% READ tests against views but is not currently functioning
-- [ ] INTERLEAVE tables. Support for INTERLEAVE is currently WIP, and it will only support apex test targets
+- [x] ~~INTERLEAVE tables. Support for INTERLEAVE is currently WIP, and it will only support apex test targets~~
+  - [ ] INTERLEAVE talbes are now supported for both LOAD and RUN. RUN operations only support the table at the APEX of the hierarchy
+- [ ] Inserting data across multiple tables in the same transaction
 - [ ] No SCAN or DELETE operations are supported at this time
 - [ ] Tables with foreign key relationships
 - [ ] Testing multiple tables at once
+- [x] ~~Tables containing columns with `allow_commit_timestamp=TRUE`~~
 
 ## Development
 
